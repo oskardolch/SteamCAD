@@ -1,0 +1,106 @@
+BUILDDIR=build
+
+SUFFIX=
+PREFIX=
+TOOLPFX=
+CC=$(PREFIX)gcc
+CP=$(PREFIX)g++
+RC=$(TOOLPFX)windres
+DL=$(TOOLPFX)dlltool
+AR=$(TOOLPFX)ar
+
+CAIROINC=..\Cairo\cairo-1.14.8\src
+
+VPATH=C:/MinGW32/Lib;./$(BUILDDIR)
+
+CFLAGS=-c -O2 -DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x0600 -I$(CAIROINC)
+
+# ole32 defines CoInitialize, CoUninitialize
+# oleaut32 defines CoCreateInstance
+# uuid defines GUID_NULL
+
+# SteamDraw
+
+Drawobj = SteamCAD.o MainWnd.o SteamCAD_res.o DDataTypes.o XMLUtils.o \
+	DFileSetupDlg.o DMath.o DTopo.o DDrawTypes.o DLine.o DCircle.o \
+	DEllipse.o DPrimitive.o DArcElps.o DHyper.o DParabola.o DSpline.o \
+	DEvolv.o DLineStyleDlg.o DDimEditDlg.o DExpCairo.o DScaleDlg.o \
+	DStatDlg.o DParser.o DSnapDlg.o
+#	DToolBar.o
+Drawmod = $(addprefix $(BUILDDIR)/, $(Drawobj)) \
+	-lgdi32 -lcomctl32 -lole32 -loleaut32 -luuid -lcairo.dll
+
+SteamCAD : $(Drawobj)
+	$(CP) -s -L./$(BUILDDIR) -o $(BUILDDIR)/SteamCAD.exe $(Drawmod) \
+	-static-libgcc -static-libstdc++ -mwindows
+
+# Template command for compiling .cpp to .o
+%.o : Source/%.cpp
+	$(CC) $(CFLAGS) $< -o $(BUILDDIR)/$@
+
+# SteamDraw sources
+DDataTypes.o : Source/DDataTypes.cpp Source/DDataTypes.hpp Source/DTopo.hpp \
+	Source/DMath.hpp
+DMath.o : Source/DMath.cpp Source/DMath.hpp
+DTopo.o : Source/DTopo.cpp Source/DTopo.hpp Source/DMath.hpp
+DDrawTypes.o : Source/DDrawTypes.cpp Source/DDrawTypes.hpp Source/DDataTypes.hpp \
+	Source/DLine.hpp Source/DCircle.hpp Source/DEllipse.hpp Source/DPrimitive.hpp \
+	Source/DArcElps.hpp Source/DHyper.hpp Source/DParabola.hpp Source/DSpline.hpp \
+	Source/DEvolv.hpp Source/DParser.hpp
+DPrimitive.o : Source/DPrimitive.cpp Source/DPrimitive.hpp Source/DDataTypes.hpp \
+	Source/DMath.hpp
+DLine.o : Source/DLine.cpp Source/DLine.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp
+DCircle.o : Source/DCircle.cpp Source/DCircle.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DEllipse.o : Source/DEllipse.cpp Source/DEllipse.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DArcElps.o : Source/DArcElps.cpp Source/DArcElps.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DHyper.o : Source/DHyper.cpp Source/DHyper.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DParabola.o : Source/DParabola.cpp Source/DParabola.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DSpline.o : Source/DSpline.cpp Source/DSpline.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DEvolv.o : Source/DEvolv.cpp Source/DEvolv.hpp Source/DDataTypes.hpp \
+	Source/DPrimitive.hpp Source/DMath.hpp
+DExpCairo.o : Source/DExpCairo.cpp Source/DExpCairo.hpp Source/DDataTypes.hpp \
+	Source/DDrawTypes.hpp Source/DPrimitive.hpp Source/DParser.hpp
+DParser.o : Source/DParser.cpp Source/DParser.hpp Source/DMath.hpp Source/DDataTypes.hpp
+
+# Template command for compiling .cpp to .o
+%.o : Win32/%.cpp
+	$(CC) $(CFLAGS) $< -o $(BUILDDIR)/$@
+
+# Win32 sources
+SteamCAD.o : Win32/SteamCAD.cpp Win32/MainWnd.hpp
+SteamCAD_res.o : Win32/SteamCAD.rc Win32/SteamCAD.rh \
+	Win32/SteamCAD.exe.manifest.$(SUFFIX)
+	$(RC) $(RCFLAGS) $< -o $(BUILDDIR)/$@
+MainWnd.o : Win32/MainWnd.cpp Win32/MainWnd.hpp \
+	Win32/SteamCAD.rh Win32/XMLUtils.hpp \
+	Win32/DFileSetupDlg.hpp Source/DDrawTypes.hpp \
+	Win32/DLineStyleDlg.hpp Win32/DDimEditDlg.hpp \
+	Source/DExpCairo.hpp Win32/DScaleDlg.hpp Win32/DStatDlg.hpp \
+	Source/DParser.hpp Win32/DSnapDlg.hpp
+#	Win32/DToolBar.hpp
+#DToolBar.o : Win32/DToolBar.cpp Win32/DToolBar.hpp \
+#	Win32/SteamCAD.rh
+XMLUtils.o : Win32/XMLUtils.cpp Win32/XMLUtils.hpp
+DFileSetupDlg.o : Win32/DFileSetupDlg.cpp Win32/DFileSetupDlg.hpp Win32/XMLUtils.hpp \
+	Win32/SteamCAD.rh Source/DDataTypes.hpp Source/DParser.hpp
+DLineStyleDlg.o : Win32/DLineStyleDlg.cpp Win32/DLineStyleDlg.hpp Win32/XMLUtils.hpp \
+	Win32/SteamCAD.rh Source/DDataTypes.hpp Win32/DFileSetupDlg.hpp
+DDimEditDlg.o : Win32/DDimEditDlg.cpp Win32/DDimEditDlg.hpp Win32/DFileSetupDlg.hpp \
+	Win32/XMLUtils.hpp Win32/SteamCAD.rh Source/DDataTypes.hpp Source/DParser.hpp
+DScaleDlg.o : Win32/DScaleDlg.cpp Win32/DScaleDlg.hpp Win32/XMLUtils.hpp \
+	Win32/SteamCAD.rh Win32/DFileSetupDlg.hpp Source/DMath.hpp
+DStatDlg.o : Win32/DStatDlg.cpp Win32/DStatDlg.hpp Win32/XMLUtils.hpp \
+	Win32/SteamCAD.rh
+DSnapDlg.o : Win32/DSnapDlg.cpp Win32/DSnapDlg.hpp Win32/XMLUtils.hpp \
+	Win32/SteamCAD.rh
+
+#clean
+clean:
+	del $(BUILDDIR)\*.o

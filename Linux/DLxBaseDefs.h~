@@ -1,0 +1,42 @@
+#ifndef _DLXBASEDEFS_H_
+#define _DLXBASEDEFS_H_
+
+#include "../Source/DBaseDefs.hpp"
+
+#define _(text) text
+
+const char g_sDlgResource[] = "\
+<interface>\
+  <object class=\"GtkDialog\" id=\"file_props_dlg\">\
+    <property name=\"title\" translatable=\"yes\">File Setup</property>\
+    <child internal-child=\"vbox\">\
+      <object class=\"GtkVBox\" id=\"dialog-vbox1\">\
+        <child internal-child=\"action_area\">\
+          <object class=\"GtkHButtonBox\" id=\"dialog-action_area1\">\
+            <child>\
+              <object class=\"GtkButton\" id=\"button_cancel\">\
+                <property name=\"use-stock\">True</property>\
+                <property name=\"label\" translatable=\"yes\">gtk-cancel</property>\
+                <property name=\"visible\">True</property>\
+              </object>\
+            </child>\
+            <child>\
+              <object class=\"GtkButton\" id=\"button_ok\">\
+                <property name=\"use-stock\">True</property>\
+                <property name=\"label\" translatable=\"yes\">gtk-ok</property>\
+                <property name=\"visible\">True</property>\
+              </object>\
+            </child>\
+          </object>\
+        </child>\
+      </object>\
+    </child>\
+    <action-widgets>\
+      <action-widget response=\"-5\">button_ok</action-widget>\
+      <action-widget response=\"-6\">button_cancel</action-widget>\
+    </action-widgets>\
+  </object>\
+</interface>";
+
+#endif
+

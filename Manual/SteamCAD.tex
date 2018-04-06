@@ -1,0 +1,63 @@
+\documentclass[a4paper,12pt,varqu]{book}
+\usepackage{epsfig,graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{textcomp, pifont}
+\usepackage{amsmath, amssymb}
+\usepackage{times, helvet, zi4}
+\usepackage{tabularx,longtable}
+\usepackage{makeidx}
+\usepackage{upquote}
+\usepackage{xfrac}
+\title{SteamCAD User Guide}
+\author{Pavel Krej\v{c}\'{\i}\v{r}}
+
+\special{pdf: docinfo <<
+   /Title (SteamCAD User Guide)
+   /Subject (SteamCAD User Guide)
+   /Keywords (SteamCAD)
+   /Author (Pavel Krejcir) >>}
+\special{pdf: pagesize width 210mm height 297mm}
+\setlength{\extrarowheight}{4pt}
+
+\DeclareFontEncoding{8r}{}{}
+\DeclareFontSubstitution{8r}{ptm}{m}{n}
+
+\newcommand{\primitiveApostophe}{{\fontencoding{8r}\selectfont\symbol{31}}}
+\newcommand{\primitiveQuote}{{\fontencoding{8r}\selectfont\symbol{34}}}
+
+\newcommand{\R}{\Pisymbol{psy}{210}}
+\newcommand{\TM}{\Pisymbol{psy}{212}}
+\newcommand{\lar}{\Pisymbol{psy}{174}}
+\newcommand{\bc}{\symbol{"5C}}
+\newcommand{\ap}{\primitiveApostophe}
+\newcommand{\eg}{\mbox{e.g.}}
+\newcommand{\ie}{\mbox{i.e.}}
+\newcommand{\etc}{\mbox{etc.}}
+\newcommand{\stw}[1]{{\small\texttt{#1}}}
+\newcommand{\ssw}[1]{{\small\textsf{#1}}}
+\newcommand{\fntw}[1]{{\scriptsize\texttt{#1}}}
+
+\hyphenation{Steam-CAD}
+
+\makeindex
+
+\begin{document}
+\begin{titlepage}
+\maketitle
+\end{titlepage}
+\pagestyle{empty}
+\parindent=2mm
+\cleardoublepage
+\special{pdf: out 1 << /Title (\contentsname) /Dest [ @thispage /FitH @ypos ] >>}
+\tableofcontents
+\cleardoublepage
+\pagestyle{headings}
+\include{Source/Introduction}
+\include{Source/Chapter1}
+\include{Source/Chapter2}
+\include{Source/Chapter3}
+\include{Source/Chapter4}
+
+\end{document}
+

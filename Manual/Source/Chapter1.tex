@@ -1,0 +1,193 @@
+\chapter{Drawing Basics}\label{chap:chap1}
+\special{pdf: out 1 << /Title (\thechapter. Drawing Basics) /Dest [ @thispage /FitH @ypos ] >>}
+
+There are 8 line types available in SteamCAD - line, circle, ellipse, ``arc ellipse'',
+which is an ellipse-like shape composed from circular arcs, parabola, hyperbola,
+spline and evolventa.
+
+Before we discuss each of the basic elements, we should mention one aspect also
+(probably) unique to SteamCAD. From geometry point of view, the elements can be either
+bound or unbound. To draw a bound element, like circle or ellipse, it is quite easy.
+However, the question is what to do with unbound elements, like line, parabola or
+hyperbola? In SteamCAD, when you draw an unbound element, it exists in the drawing
+as a ``whole''. What does it mean? It means that if you draw for example a hyperbola,
+and then zoom out, the hyberbola ends at the drawing view. You can zoom out as
+much as you want and the whole hyperbola is still there. And it remains like that
+until you cut it from two sides. Then it becomes a bounded object.
+
+Each drawing primitive has one or more modes how to be drawn. The modes comprise of
+mouse button and key combinations. However, in most situation, holding the Ctrl key
+while placing a point will snap it to the invisible grid. The grid size can be set
+in document properties. Some curved primitives also require one or two line primitive
+to be selected prior placing the curve. We will explain all the modes in this chapter.
+
+\section{Line}\label{draw:line}
+\special{pdf: out 2 << /Title (\thesection. Line) /Dest [ @thispage /FitH @ypos ] >>}
+
+Line can be started by pressing ``L'' shortcut. Once you are in line mode, you can place
+the first point by clicking the left mouse button. When the first point is set, the
+behavior of the Ctrl control changes. For placing the second point of a line with Ctrl,
+the point is snapped so that the line angle fits certain angles. The ``angular grid''
+is set to 15 degrees by default, but can be set in the document properties.
+
+Line has a second placing mode, which is if you start the first point by right mouse
+button click. In this case, the line is drawn so that it mirrors the second point into
+the first point. This is useful if you need to find a middle point of two points.
+
+When entering the line mode, there is also an edit box on the status bar. You can
+specify the angle the line should incline from the horizontal line.
+
+\section{Circle}
+\special{pdf: out 2 << /Title (\thesection. Circle) /Dest [ @thispage /FitH @ypos ] >>}
+
+The circle can be started by pressing ``C'' shortcut and can operate in four modes.
+\begin{enumerate}
+\item Plcaing the centre by right mouse button and a point on the circle by left
+mouse button.
+\item Placing three points on the circle by left mouse button clicks.
+\item Placing two poins defining the diameter by first left mouse button click and
+left mouse button double click.
+\item Placing two points on the circle by left mouse button clicks while keeping
+the circle cetner on a selected line.
+\end{enumerate}
+
+When placing a circle, there is also an edit box on the status bar, wehere you can
+specify the circle radius.
+
+\section{Ellipse}
+\special{pdf: out 2 << /Title (\thesection. Ellipse) /Dest [ @thispage /FitH @ypos ] >>}
+
+The ellipse can be started by pressing ``E'' shortcut and can operate in three modes.
+\begin{enumerate}
+\item Placing two focus points by right mouse button click and one point on the ellipse
+by left mouse button.
+\item When two non-parallel lines are selected, left mouse double click places the ellipse
+so that the ellipse center lies on the lines intersection and the major and minor ellipse
+semiaxes mirros the selected lines.
+\item When two non-parallel lines are selected, two left mouse clicks define two points
+on the ellipse while the ellipse center lies at the two selected lines intersection.
+\end{enumerate}
+
+When placing with selected intersecting ``construction'' lines, the ellipse is constructed
+so that the tanget on the ellipse and a construction line intersection is parallel to the
+second construction line. This can be useful when drawing in axonometric projection.
+
+\section{Arc ellipse}
+\special{pdf: out 2 << /Title (\thesection. Arc ellipse) /Dest [ @thispage /FitH @ypos ] >>}
+
+Arc ellipse is a special primitive, which in fact could be replaced by four circular arcs.
+However, it is there to help mimic the old style of hand drawing, when creating an exact
+ellipse was difficult, and the ellipse was often approximated by a shape consisting of
+circular arcs.
+
+It has two modes of operation. Two non-parallel line primitives must always be selected,
+and the arc ellipse can either be placed by one left mouse button double click, or by
+two consecutive left mouse button clicks. The shortcut for arc ellipse is ``A''.
+
+\section{Hyperbola}
+\special{pdf: out 2 << /Title (\thesection. Hyperbola) /Dest [ @thispage /FitH @ypos ] >>}
+
+To place a hyperbola, two non-parallel lines must be selected. The hyperbola is then
+placed by left mouse button click and this is the only mode. The shortcut for hyperbola
+is ``H''.
+
+\section{Parabola}
+\special{pdf: out 2 << /Title (\thesection. Parabola) /Dest [ @thispage /FitH @ypos ] >>}
+
+Parabola always requires one line primitive to be selected. It is then placed by single
+left mouse button click and the clicked point represents the parabola's focus. Parabola
+can be invoked by ``P'' shortcut.
+
+\section{Spline}
+\special{pdf: out 2 << /Title (\thesection. Spline) /Dest [ @thispage /FitH @ypos ] >>}
+
+Spline places a second order B-spline curve. The curve is designed so that it goes through
+the clicked points. The points are placed by left mouse button click and the number of
+points is not limited. Clicking the right mouse whenever during the curve creation toggles
+the closeness. Initially, the spline is open. When clicking the right mouse button, the spline
+becomes a closed curve.
+
+Double click the left mouse button to finish the curve. The double clicked point becomes
+part of the curve definition. Spline can be invoked by pressing ``S'' shortcut.
+
+\section{Evolventa}
+\special{pdf: out 2 << /Title (\thesection. Evolventa) /Dest [ @thispage /FitH @ypos ] >>}
+
+This is a curve created by rolling out a line along a circle. This is included in SteamCAD
+as a gear creation helper. To start evolventa, one circle must be selected. Start evolventa
+by pressing ``V'' shortcut and place two points by left mouse button click to define two
+points on the evolventa.
+
+\section{Placing a line tangent to two curves}
+\special{pdf: out 2 << /Title (\thesection. Placing a line tangent to two curves) /Dest [ @thispage /FitH @ypos ] >>}
+
+Line is a special curve and has more placing options than the two mentioned in the
+section~\ref{draw:line}. We have already mentioned that holding Ctrl key while positioning
+the second point keeps the point restricted at certain angles. Moreover, if one primitive
+(of arbitrary type) is selected while dwawing a line, the angle restricted for Ctrl key
+is derived from the selected curve.
+
+This can be used to draw a line perpendicular to another one or a line tangent to a curve.
+If a primitive is selected and you put the first line point on that curve, holding the Ctrl
+key will restrict to angle of the line with respect to the tangent of the selected curve.
+
+A special and quite frequent task in mechanical engineering is to draw a line which is tangent
+to two selected curves, usually circles. SteamCAD can do this, even not restricting the curve
+type to circle. The procedure can be as folows:
+\begin{enumerate}
+\item Select one curve you want to place the line as a tangent.
+\item Switch to line mode, and put the first point somewhere on the selected curve.
+\item Hold down Ctrl key and move the line so that it gets the required angle. In this case
+we want the line position to be tangent, but can be any angle available through the angular
+grid, so the line can also be perpendicular, for example.
+\item Once you have the desired angle, press Shift key (while still holding the Ctrl key)
+and move the line towards the second curve. The line will start following the first curve
+while keeping the initial angle.
+\item When your mouse pointer gets close to the second curve, use the snapping mechanism
+to find either the tangent or the perpendicular point.
+\item Click left mouse button to finish the line.
+\end{enumerate}
+
+\section{Snapping}
+\special{pdf: out 2 << /Title (\thesection. Snapping) /Dest [ @thispage /FitH @ypos ] >>}
+
+When designing SteamCAD, the first idea was to put various options for snapping as we can
+see in other CAD systems, like snap on lines, intersections, line ends etc. In the end
+I decided that SteamCAD has a fixed snap logic. It snappes to curves, curve ends,
+intersections, tangent points and perpendicular points. The snap to pure curve element has
+approximatelly half gravity than the other elements.
+
+Considering that an arbitrary zoom is available in SteamCAD, it gives you an oportunity
+to snap at the intended point in most situations. When it happens that the snap is
+impossible - usually due to too many elements close each other, one can right click the
+unwanted element and select ``Disable snap'' from the pop-up menu. It is also possible to
+disable the snap for the whole selection, using the ``Alt+N'' shortcut.
+
+The disabled snapping can be later restored either by right click or by ``Alt+N'' command.
+And the snapping property is not persistent in the model, so saving the document and reopen
+it will clear all the dissabled snaps.
+
+\section{View manipulation}
+\special{pdf: out 2 << /Title (\thesection. View manipulation) /Dest [ @thispage /FitH @ypos ] >>}
+
+As a final topic of this chapter, let's look at the view manipulation. There are two commands
+for manipulating the view available in the menu - it is the \textbf{Best Fit} and
+\textbf{Normal Size}. The best fit in most drawing applications calculates the minimal bounding
+box of all objects in the view and zooms to this. Since SteamCAD can contain unbounded objects,
+there is no meaning for such a command. So the best fit in SteamCAD simple zooms to the whole
+drawing area (representing the defined paper) with some margin.
+
+The normal size command tries to zoom the view so that it's physical units correspond to the
+dimensions on the screen, using the available monitor properties. It works with resonable
+accuracy on most of the physical monitors, and with less accuraci in virtualized environments.
+
+The other two common view opeartions - zoom and pan - can only be managed by the mouse.
+This is why a 3-button mouse with wheel is necessary. Zoom is simply performed by rotating
+the while, while panning is performed by clicking the wheel and dragging the view.
+
+These operations are used so heavily in technical drawing so that it does not make sense
+to create a menu item for them. Moreover, these zoom and pan actions are available always,
+it means regardless the drawing mode you are currently in, you can still use the wheel
+to zoom and pan. The wheel is not used by any other command so it is not in a conflict
+with anything else, thus always ready to manipulate the view.
+

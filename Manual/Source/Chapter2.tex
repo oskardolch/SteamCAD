@@ -1,0 +1,144 @@
+\chapter{Drawing Tools}\label{chap:chap2}
+\special{pdf: out 1 << /Title (\thechapter. Drawing Tools) /Dest [ @thispage /FitH @ypos ] >>}
+
+Placing the primitives mentioned in the chapter~\ref{chap:chap1} is usually not
+sufficient to make a meaningfull drawing. So let's discuss other tools avialbale
+in SteamCAD.
+
+\section{Selection}
+\special{pdf: out 2 << /Title (\thesection. Selection) /Dest [ @thispage /FitH @ypos ] >>}
+
+Once you finish drawing a primitive, you can escape the drawing mode pressing the ``Esc''
+key and you get into selection mode. The selection mode operates in four ways:
+\begin{enumerate}
+\item Simple selection using mouse click. In this case all selected objects are unselected
+and the newly clicked object is selected.
+\item Multiple selection when holding down the Ctrl key. In this case the clicked
+object is added to the selected set if it was previsously not selected. Otherwise
+the object is deselected.
+\item Multiple selection with dragging the left mouse button. In this case all the
+objects fully covered by selection rectangle are selected.
+\item Multiple selection with dragging the right mouse button. In this case only the
+objects partially covered by selection rectangle are selected.
+\end{enumerate}
+
+You can combine the dragging rectangle selection with the Ctrl key to add objects
+to the current selection set.
+
+\section{Copying Objects}
+\special{pdf: out 2 << /Title (\thesection. Copying Objects) /Dest [ @thispage /FitH @ypos ] >>}
+
+SteamCAD does not utilize clipboard as it is usual for similar applications. The
+reason for not using clipboard is that SteamCAD simply draw lines, nothing more. It
+does not define areas, polylines or groups of objects. So there are no Copy and Paste
+commands. To create a copy of objects, SteamCAD provides four methods more convenient
+for technical drawing:
+\begin{enumerate}
+\item \textbf{Copy Parallel} - this command is available with the shortcat ``Ctrl + C''.
+The selected object is coppied and placed upon left mouse click at a given distance
+from the original object. The command works for all the primitive types, so it actually
+creates a geometry equidistant from the original geometry. So for example an ellipse
+coppied as ``parallel'' creates a curve which is not an ellipse anymore, except when
+the distance from the original ellipse is zero. You can also copy parallel already copied
+objects.
+
+There is also an edit box in the status bar, where the exact distance can be specified.
+If it contains valid number, the distance is locked and the mouse only controls on which
+side from the origin the new object should be copied. Moreover, this only holds for
+unbound curves. For bound or closed shapes, positive values copy the object to `ouside'
+while negative values copy the object to `inside'. If the edit box is cleared or it
+contains invalid distance value, the mouse controls both the position and the distance.
+If the edit box already contains a value from previous commands, you can reuse this value
+pressing the Enter key.
+\item \textbf{Move} - this command is available with the shortcut ``Alt + M''. Once activated,
+two edit boxes appear in the status bar. You can enter the distance and the number of copies.
+If you don't specify the number of copies, or set it to zero, no copy is created and
+the object is simply moved. Otherwise the number of copies specified is created and
+the objects are distributed uniformly along the move path.
+
+If you specify the distance, you would be prompted to select a line to copy the
+objects along. The positive direction is considered from left to right and from bottom
+to top. You can also clear the distance edit box, in this case you will be prompted
+to click two points - one for move ``from'' and the second for move ``to''.
+\item \textbf{Rotate} - this command is available with the shortcut ``Ctrl + R''.
+Similarly like with move command, you can provide the angle and number of copies.
+If you don't specify the angle, you will be later prompted to click two points to
+rotate ``from'' and to rotate ``to''. The command itself is activated by clicking
+a point, which is the rotation origin.
+
+If the angle to rotate is less than 360 degrees, the number of copies is the number
+specified in the edit box. However, if the angle is equal to 360 degrees, the number
+of copies is the number in the edit box minus 1. This is because the last copy
+coincidents with the original. So for example, if you are designing a wheel with
+10 spokes, you will draw 1 spoke and then rotate it by 360 degrees with 10 copies.
+And the results will be exactly what you expect - 10 spokes ingluding the original one,
+evenly distributed in the wheel rim.
+
+This is for your convenience and it basically does the same, like rotating one spoke
+for 360 - 36 degrees with 9 copies.
+\item \textbf{Mirror} - this command is available with the shortcut ``Alt + I''.
+This command is activated by clicking a line object to mirror the selected objects
+around.
+\end{enumerate}
+
+All the copy commands keep the original select set selected.
+
+\section{Deleting and Undoing Changes}
+\special{pdf: out 2 << /Title (\thesection. Deleting and Undoing Changes) /Dest [ @thispage /FitH @ypos ] >>}
+
+Similarly as with clipboard, SteamCAD implements very little from usual Undo/Redo
+commands. Here Undo and Redo only applies to deleted objects. You can delete the selected
+objects simply by pressing the ``Delete'' key. All other SteamCAD operations can be
+undone quite easily in a natural way, how we will see later.
+
+\section{Cutting and Extending Objects}
+\special{pdf: out 2 << /Title (\thesection. Cutting and Extending Objects) /Dest [ @thispage /FitH @ypos ] >>}
+
+A line spanned accros all the paper is usually not what we would like to see in technical
+drawings. So the next step is to trim the line to desired length. This is done by
+activating the \textbf{Knife} command (``Alt + K'') and clicking the selected primitive at the
+point you want to cut it. You can cut any number of selected primitives at once,
+and you can also cut a single primitive as many times as you want. After you finish
+with cutting, you can enter the selection mode and delete the unwanted parts.
+
+A command complementary to Knife is called \textbf{Extend} (``Ctrl + E'') and it is
+actually something like undo for knife. If you realize that a primitive is trimmed
+at a wrong place, and the line is actually ``shorter'' than it should be, you can simply
+activate the Extend command and click the end of the line, which should be extended.
+The clicked half of the line is then restored to the original, unbounded shape.
+
+\section{Rounding Objects}
+\special{pdf: out 2 << /Title (\thesection. Rounding Objects) /Dest [ @thispage /FitH @ypos ] >>}
+
+The last command for creating shapes is called \textbf{Round} (``Ctrl + B'' - should have
+been ``Bevel'' originaly, but later I realized that such a command can easily be replaced
+by other tools). Selecting any two primitives, the command attempts to place a circular
+arc tangent to both curves. You can also specify the radius of the arc. Unlike round
+command in similar CAD system, the SteamCAD's version does not modify the original
+selected shapes. It's up to the user to trim them as appropriate.
+
+\section{Line Shaping}
+\special{pdf: out 2 << /Title (\thesection. Line Shaping) /Dest [ @thispage /FitH @ypos ] >>}
+
+Finally, when you finish drawing your shapes, you may want to specify the line
+thickness and pattern. You can do this for the whole selected set at once, invoking
+the \textbf{Line Style} dialog (``Alt + S''). Here you can specify the line width,
+excentricity and pattern. The pattern should contain even number of values, every
+pair represents the length of the line segment and the length of the hole.
+
+The line excentricity means how much is the line set off its mathematical origin.
+A typical usage of this parameter is whan drawing rails. Look at the introductory
+image of the class 6 locomotive - the excentricity for rails is set to 100\%.
+It means that the wheels and dimensions are properly aligned to the rails, while
+the line is significantly thick to emphasize that this is actually the machine
+base.
+
+The line thickness can be an arbitrary decimal value. A positive value sets the
+real line thickness in paper units. Lines with positive thickness are scaled
+accordingly to the current zoom. A line with thickness zero is always drawn
+as 1 pixel width, regardless the zoom. Lines with negative thicknes are drawn
+scaled as positive lines, but only in SteamCAD. Lines with negative
+thicknes are not exported to the target format. Exports will be discussed later
+in the section~\ref{sec:export}.
+
+
