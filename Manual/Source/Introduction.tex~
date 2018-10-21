@@ -67,7 +67,7 @@ not available for hand drawing, such as mouse snapping tool.
 \special{pdf: out 2 << /Title (\thesection. What is NOT SteamCAD) /Dest [ @thispage /FitH @ypos ] >>}
 
 SteamCAD only allows drawing of black lines. It does not utilize colors at all. However, you can
-use SteamCAD to quickly create exact 2D drawing and export the result into SVG format. Then
+use SteamCAD to quicly create exact 2D drawing and export the result into SVG format. Then
 continue with coloring in another aplication such as Inkscape.
 
 SteamCAD also does not define areas. It only draws line and curve segments. You can create a

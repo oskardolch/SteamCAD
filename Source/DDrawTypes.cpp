@@ -3522,6 +3522,7 @@ int CDataList::GetSnapPoint(int iSnapMask, CDPoint cPt, double dDist, PDLine pSn
 
     df1 = GetNorm(cPtSnap1.cDirection);
     df2 = GetNorm(cPtSnap2.cDirection);
+    double dIncl;
 
     if(df1 < g_dPrec)
     {
@@ -3538,6 +3539,7 @@ int CDataList::GetSnapPoint(int iSnapMask, CDPoint cPt, double dDist, PDLine pSn
     while(bDoIter)
     {
         iIter++;
+        dIncl = 0.0;
         iX = LineXLine(false, cPtSnap1.cOrigin, GetNormal(cPtSnap1.cDirection),
             cPtSnap2.cOrigin, GetNormal(cPtSnap2.cDirection), &cX);
         if(iX > 0)
@@ -3561,11 +3563,13 @@ int CDataList::GetSnapPoint(int iSnapMask, CDPoint cPt, double dDist, PDLine pSn
                 cDir = cPtSnap2.cDirection;
                 iIter = iIterMax;
             }
+            else dIncl = fabs(cPtSnap1.cDirection*cPtSnap2.cDirection);
         }
         else bFound2 = false;
 
         bDoIter = bFound2 && (iIter < iIterMax) &&
-            ((dDist1 > g_dRootPrec) || (dDist2 > g_dRootPrec) || (iIter < 4));
+            ((dDist1 > g_dRootPrec) || (dDist2 > g_dRootPrec) || (iIter < 4) ||
+             ((dIncl > 1.0 - g_dPrec) && (dIncl < 1.0 - g_dRootPrec)));
         /*if(!bDoIter && bFound2 && (iIter < iIterMax))
         {
             // do one more iteration

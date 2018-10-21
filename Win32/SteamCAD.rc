@@ -22,7 +22,7 @@ CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "Win32/SteamCAD.exe.manifest.64"
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "Win32/SteamCAD.exe.manifest.32"
 #endif
 
-ICO_EXIT ICON "Images/stock_exit_24.ico"
+// ICO_EXIT ICON "Images/stock_exit_24.ico"
 
 STRINGTABLE
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -30,12 +30,12 @@ BEGIN
     IDS_ANGLE "Angle: "
     IDS_RADIUS "Radius: "
     IDS_DISTANCE "Distance: "
-    IDS_STEAMDRAWFILTER "Steam CAD files (*.sdr)\1*.sdr\1All files\1*.*\1\1"
+    IDS_STEAMDRAWFILTER "Steam draw files (*.sdr)\1*.sdr\1All files\1*.*\1\1"
     IDS_NUMCOPIES "# of copies: "
     IDS_SELPOINTTOROTATE "Click a point to rotate about"
     IDS_SELLINETOMOVE "Click a line to move along"
     IDS_SELLINETOMIRROR "Click a line to mirror about"
-    IDS_STEAMEXPORTFILTER "Adobe Acrobat (*.pdf)\1*.pdf\1PostScript (*.ps)\1*.ps\1Encapsulated PostScript (*.eps)\1*.eps\1PNG Image (*.png)\1*.png\1Scalable Vector (*.svg)\1*.svg\1\1"
+    IDS_STEAMEXPORTFILTER "Adobe Acrobat (*.pdf)\1*.pdf\1PostScript (*.ps)\1*.ps\1Encapsulated PostScript (*.eps)\1*.eps\1PNG Image (*.png)\1*.png\1Scalable Vector (*.svg)\1*.svg\1Drawing Exchange Format (*.dxf)\1*.dxf\1\1"
     IDS_SELPOINTFROMMOVE "Click a point to move from"
     IDS_SELPOINTTOMOVE "Click a point to move to"
     IDS_SELPOINTFROMROT "Click a point to rotate from"
@@ -111,12 +111,12 @@ BEGIN
         MENUITEM "Paper units\tCtrl+P", IDM_EDITPAPERUNITS
         MENUITEM SEPARATOR
         MENUITEM "&Undo\tCtrl+Z", IDM_EDITUNDO
-        MENUITEM "Ro&do\tCtrl+Shift+Z", IDM_EDITREDO
+        MENUITEM "Re&do\tCtrl+Shift+Z", IDM_EDITREDO
     END
     POPUP "&View"
     BEGIN
-        MENUITEM "&Fit all", IDM_VIEWFITALL
-        MENUITEM "Actual &size", IDM_VIEWACTSIZE
+        MENUITEM "Best &Fit", IDM_VIEWFITALL
+        MENUITEM "&Normal Size", IDM_VIEWACTSIZE
     END
     /*POPUP "&Snap to"
     BEGIN
