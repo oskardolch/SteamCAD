@@ -1,0 +1,29 @@
+language: cpp
+compiler: gcc
+sudo: required
+dist: trusty
+
+os: linux
+
+before install:
+  - sudo add-apt-repository ppa:beineri/opt-qt571-trusty -y
+  - sudo apt-get update -qq
+
+install:
+  - sudo apt-get --allow-unauthenticated install -qq qt57base libqt5opengl5-dev; source /opt/qt57/bin/qt57-env.sh
+
+script:
+  - qmake PREFIX=/usr -v
+  - qmake PREFIX=/usr -r
+  - make -j4
+  - exit 0
+
+after_success:
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - if [ "$TRAVIS_TAG" != "$TRAVIS_BRANCH" ] && [ "$TRAVIS_BRANCH" == "master" ]; then export TRAVIS_EVENT_TYPE=pull_request; fi
+  - bash ./upload.sh ./SteamCAD-*.AppImage*
+
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous)$/
