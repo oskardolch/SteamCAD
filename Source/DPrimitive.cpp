@@ -34,7 +34,7 @@ int CropLineLeft(CDPrimitive cPrim, CDPoint cPt1, CDPoint cPt2,
 
     CDPoint cRes;
 
-    int iX = LineXLine(false, cX1, cX2 - cX1, cY1, cY2 - cY1, &cRes);
+    int iX = LineXLine(cX1, cX2 - cX1, cY1, cY2 - cY1, &cRes);
 
     if(iX < 1) return 0;
 
@@ -335,9 +335,14 @@ int CropQuadLeft(CDPrimitive cPrim, CDPoint cPt1, CDPoint cPt2,
 
     CDPoint cN1 = cDir/dNorm;
 
-    CDPoint cptX[3];
-    double dts[3];
-    int iX = QuadXLine(cPrim.cPt1, cPrim.cPt2, cPrim.cPt3, cPt1, cPt2, cptX, dts);
+    CDPoint cCoefs[3];
+    cCoefs[0] = cPrim.cPt1;
+    cCoefs[1] = cPrim.cPt2;
+    cCoefs[2] = cPrim.cPt3;
+
+    CDPoint cptX[2];
+    double dts[2];
+    int iX = QuadXSeg(cCoefs, cPt1, cPt2, cptX, dts);
 
     CDPoint cp1 = Rotate(cPrim.cPt1 - cPt1, cN1, false);
 
@@ -1028,7 +1033,7 @@ bool PointInArc(CDPoint cPt, CDLine cStart, CDLine cEnd)
     CDPoint cOrig, cPt1, cPt2;
     if(cStart.bIsSet && cEnd.bIsSet)
     {
-        int iX = LineXLine(false, cStart.cOrigin, cStart.cDirection,
+        int iX = LineXLine(cStart.cOrigin, cStart.cDirection,
             cEnd.cOrigin, cEnd.cDirection, &cOrig);
 
         if(iX < 1) // lines are parallel
@@ -1154,6 +1159,7 @@ double GetQuadLength(PDPrimitive pQuad, double t1, double t2)
 		double v1 = (dx1*t1 + dx12)/dA;
 		double v2 = (dx1*t2 + dx12)/dA;
 		dRes = (LenInt(v2) - LenInt(v1))*dDet/2.0/dx1/sqrt(dx1);
+        if(dRes < g_dPrec) dRes = 0.0;
 	}
 	else
 	{
@@ -1165,6 +1171,7 @@ double GetQuadLength(PDPrimitive pQuad, double t1, double t2)
 		{
 			dx2 = sqrt(dx1);
 			dRes = (t2 - t1)*(dx2*(t2 + t1)/2.0 + dx12/dx2);
+            if(dRes < g_dPrec) dRes = 0.0;
 		}
 	}
 
@@ -1220,12 +1227,15 @@ double GetQuadPointAtDist(PDPrimitive pQuad, double t1, double dDist)
         for(int i = 0; i < iRoots; i++)
 		{
             a0 = (dRoots[i]*dA - dx12)/dx1;
-			a2 = GetQuadLength(pQuad, t1, a0);
-			if(fabs(dDist - a2) < fabs(dDist - a1))
-			{
-				a1 = a2;
-				dRes = a0;
-			}
+            if(a0 > t1 - g_dPrec)
+            {
+			    a2 = GetQuadLength(pQuad, t1, a0);
+			    if(fabs(dDist - a2) < fabs(dDist - a1))
+			    {
+				    a1 = a2;
+				    dRes = a0;
+			    }
+            }
 		}
 
 		// we believe we are pretty close to the solution at the moment
@@ -1278,56 +1288,57 @@ double GetQuadPointAtDist(PDPrimitive pQuad, double t1, double dDist)
 	return(dRes);
 }
 
-int MergeBounds(double da1, double da2, double db1, double db2, double *pdBnds)
+int RefInBounds(double da1, double da2, double dRef)
 {
-    bool b1, b2;
+    bool bCycle = da2 < da1 - g_dPrec;
+    bool bInside;
 
-    if(da2 < da1)
+    if(bCycle) bInside = (da1 + g_dPrec < dRef) || (dRef < da2 - g_dPrec);
+    else bInside = (da1 + g_dPrec < dRef) && (dRef < da2 - g_dPrec);
+
+    if(bInside) return 3;
+
+    if((da2 - g_dPrec < dRef) && (dRef < da2 + g_dPrec)) return 2;
+    if((da1 - g_dPrec < dRef) && (dRef < da1 + g_dPrec)) return 1;
+
+    return 0;
+}
+
+int RefInOpenBounds(PDRefPoint pBounds, double dRef)
+{
+    if(pBounds[0].bIsSet && pBounds[1].bIsSet) return RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dRef);
+    if(pBounds[0].bIsSet)
     {
-        b1 = (da2 < db1) && (db1 < da1);
-        b2 = (da2 < db2) && (db2 < da1);
-        if(db2 < db1)
-        {
-            if(b1 && b2)
-            {
-                b1 = (db2 < da1) && (da1 < db1);
-                if(b1)
-                {
-                    pdBnds[0] = da1;
-                    pdBnds[1] = da2;
-                    return 1;
-                }
-                return 0;
-            }
-            if(b1)
-            {
-                pdBnds[0] = da1;
-                pdBnds[1] = db2;
-                return 1;
-            }
-            if(b2)
-            {
-                pdBnds[0] = db1;
-                pdBnds[1] = da2;
-                return 1;
-            }
-            pdBnds[0] = db1;
-            pdBnds[1] = db2;
-            return 1;
-        }
-        if(b1 && b2) return 0;
-        if(b1)
-        {
-            pdBnds[0] = da1;
-            pdBnds[1] = db2;
-            return 1;
-        }
-        if(b2)
-        {
-            pdBnds[0] = db1;
-            pdBnds[1] = da2;
-            return 1;
-        }
+        if(pBounds[0].dRef > dRef + g_dPrec) return 0;
+        if(pBounds[0].dRef > dRef - g_dPrec) return 1;
+        return 3;
+    }
+    if(pBounds[1].bIsSet)
+    {
+        if(pBounds[1].dRef < dRef - g_dPrec) return 0;
+        if(pBounds[1].dRef < dRef + g_dPrec) return 2;
+    }
+    return 3;
+}
+
+int MergeBounds(double da1, double da2, double db1, double db2, bool bFullCycle, double *pdBnds)
+{
+    if(bFullCycle)
+    {
+        pdBnds[0] = db1;
+        pdBnds[1] = db2;
+        return 1;
+    }
+
+    int ia1 = RefInBounds(db1, db2, da1);
+    int ia2 = RefInBounds(db1, db2, da2);
+    int ib1 = RefInBounds(da1, da2, db1);
+    int ib2 = RefInBounds(da1, da2, db2);
+
+    int iSum = ia1 + ia2 + ib1 + ib2;
+    if(iSum < 4) return 0;
+    if(iSum > 10)
+    {
         pdBnds[0] = da1;
         pdBnds[1] = db2;
         pdBnds[2] = db1;
@@ -1335,68 +1346,24 @@ int MergeBounds(double da1, double da2, double db1, double db2, double *pdBnds)
         return 2;
     }
 
-    b1 = (da1 < db1) && (db1 < da2);
-    b2 = (da1 < db2) && (db2 < da2);
-    if(db1 < db2)
+    if((ia1 < 3) && (ia2 < 3) && (ib1 < 3) && (ib2 < 3))
     {
-        if(b1 && b2)
-        {
-            pdBnds[0] = db1;
-            pdBnds[1] = db2;
-            return 1;
-        }
-        if(b1)
-        {
-            pdBnds[0] = db1;
-            pdBnds[1] = da2;
-            return 1;
-        }
-        if(b2)
-        {
-            pdBnds[0] = da1;
-            pdBnds[1] = db2;
-            return 1;
-        }
+        if(ia1 > 1) return 0;
 
-        b1 = (db1 < da1) && (da1 < db2);
-        if(b1)
-        {
-            pdBnds[0] = da1;
-            pdBnds[1] = da2;
-            return 1;
-        }
-        return 0;
-    }
-
-    if(b1 && b2)
-    {
         pdBnds[0] = db1;
-        pdBnds[1] = da2;
-        pdBnds[2] = da1;
-        pdBnds[3] = db2;
-        return 2;
-    }
-    if(b1)
-    {
-        pdBnds[0] = db1;
-        pdBnds[1] = da2;
-        return 1;
-    }
-    if(b2)
-    {
-        pdBnds[0] = da1;
         pdBnds[1] = db2;
         return 1;
     }
 
-    b1 = (db2 < da1) && (da1 < db1);
-    if(!b1)
-    {
-        pdBnds[0] = da1;
-        pdBnds[1] = da2;
-        return 1;
-    }
-    return 0;
+    if(ia1 > 2) pdBnds[0] = da1;
+    if(ib1 > 2) pdBnds[0] = db1;
+    if(ia2 > 2) pdBnds[1] = da2;
+    if(ib2 > 2) pdBnds[1] = db2;
+
+    if(iSum == 5) pdBnds[0] = db1;
+    if(iSum == 7) pdBnds[1] = db2;
+
+    return 1;
 }
 
 int AddBoundCurve(double da, double db, double dr, CurveFunc pFunc, CurveFunc pFuncDer,
@@ -1657,7 +1624,7 @@ int AddBoundQuadCurve(double da, double db, double dr, CurveFunc pFunc, CurveFun
             cTmpPrim.cPt3.x += dr*cDir2.y/dNorm;
             cTmpPrim.cPt3.y -= dr*cDir2.x/dNorm;
 
-            LineXLine(false, cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
+            LineXLine(cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
 
             cPrim.iType = 4;
             cPrim.cPt1 = cOrig + Rotate(cTmpPrim.cPt1, cMainDir, true);
@@ -1704,7 +1671,7 @@ int AddBoundQuadCurve(double da, double db, double dr, CurveFunc pFunc, CurveFun
             cTmpPrim.cPt3.x += dr*cDir2.y/dNorm;
             cTmpPrim.cPt3.y -= dr*cDir2.x/dNorm;
 
-            LineXLine(false, cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
+            LineXLine(cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
 
             cPrim.iType = 4;
             cPrim.cPt1 = cOrig + Rotate(cTmpPrim.cPt1, cMainDir, true);
@@ -1722,9 +1689,12 @@ int AddBoundQuadCurve(double da, double db, double dr, CurveFunc pFunc, CurveFun
     return iRes;
 }
 
-CDPoint GetCurveRefAtDist(double da, double db, double dr, double dDist,
-    CurveFunc pFunc, CurveFunc pFuncDer)
+CDPoint GetCurveRefAtDist(double da, double db, double dr, double dBreak, double dDist,
+    CurveFunc pFunc, CurveFunc pFuncDer, PDRefPoint pBounds)
 {
+    pBounds[0].bIsSet = true;
+    pBounds[1].bIsSet = true;
+
     double dBase = 0.5;
 
     CDPrimitive cQuad;
@@ -1738,28 +1708,74 @@ CDPoint GetCurveRefAtDist(double da, double db, double dr, double dDist,
     cQuad.cPt3.y -= dr*cDir2.x/d1;
 
     bool bFound = false;
+    double dt = 0.0;
+
+    if(dBreak > g_dPrec)
+    {
+        int i = 0;
+        int iSteps = (int)dBreak + 1;
+
+        while(!bFound && (i < iSteps))
+        {
+            cDir1 = cDir2;
+            cQuad.cPt1 = cQuad.cPt3;
+
+            dt = (double)(1.0 + i)*dBreak/iSteps;
+            cDir2 = pFuncDer(da, db, dt);
+            d1 = GetNorm(cDir2);
+
+            cQuad.cPt3 = pFunc(da, db, dt);
+            cQuad.cPt3.x += dr*cDir2.y/d1;
+            cQuad.cPt3.y -= dr*cDir2.x/d1;
+
+            LineXLine(cQuad.cPt1, cDir1, cQuad.cPt3, cDir2, &cQuad.cPt2);
+            d1 = GetQuadLength(&cQuad, 0.0, 1.0);
+
+            if(d1 < dDist) dDist -= d1;
+            else
+            {
+                bFound = true;
+                pBounds[0].dRef = (double)i*dBreak/iSteps;
+                pBounds[1].dRef = dt;
+            }
+            i++;
+        }
+        dBase += dt;
+    }
 
     while(!bFound)
     {
         cDir1 = cDir2;
+        cQuad.cPt1 = cQuad.cPt3;
+
         cDir2 = pFuncDer(da, db, dBase);
         d1 = GetNorm(cDir2);
 
-        cQuad.cPt1 = cQuad.cPt3;
         cQuad.cPt3 = pFunc(da, db, dBase);
         cQuad.cPt3.x += dr*cDir2.y/d1;
         cQuad.cPt3.y -= dr*cDir2.x/d1;
 
-        LineXLine(false, cQuad.cPt1, cDir1, cQuad.cPt3, cDir2, &cQuad.cPt2);
+        LineXLine(cQuad.cPt1, cDir1, cQuad.cPt3, cDir2, &cQuad.cPt2);
         d1 = GetQuadLength(&cQuad, 0.0, 1.0);
 
         if(d1 < dDist) dDist -= d1;
-        else bFound = true;
+        else
+        {
+            bFound = true;
+            pBounds[0].dRef = dt;
+            pBounds[1].dRef = dBase;
+        }
 
+        dt = dBase;
         dBase *= 2.0;
     }
 
     double dt1 = GetQuadPointAtDist(&cQuad, 0.0, dDist);
+    double dt2 = pBounds[1].dRef - pBounds[0].dRef;
+    double dt0 = pBounds[0].dRef + dt1*dt2;
+    double dr0 = dt2/10.0;
+    if(dt0 + dr0 < pBounds[1].dRef) pBounds[1].dRef = dt0 + dr0;
+    if(pBounds[0].dRef < dt0 - dr0) pBounds[0].dRef = dt0 - dr0;
     return GetQuadPoint(&cQuad, dt1);
 }
 

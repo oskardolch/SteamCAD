@@ -25,7 +25,7 @@ objects partially covered by selection rectangle are selected.
 You can combine the dragging rectangle selection with the Ctrl key to add objects
 to the current selection set.
 
-\section{Copying Objects}
+\section{Copying Objects}\label{sec:copyobj}
 \special{pdf: out 2 << /Title (\thesection. Copying Objects) /Dest [ @thispage /FitH @ypos ] >>}
 
 SteamCAD does not utilize clipboard as it is usual for similar applications. The
@@ -34,7 +34,7 @@ does not define areas, polylines or groups of objects. So there are no Copy and 
 commands. To create a copy of objects, SteamCAD provides four methods more convenient
 for technical drawing:
 \begin{enumerate}
-\item \textbf{Copy Parallel} - this command is available with the shortcat ``Ctrl + C''.
+\item \textbf{Copy Parallel}\label{sec:copypar} - this command is available with the shortcat ``Ctrl + C''.
 The selected object is coppied and placed upon left mouse click at a given distance
 from the original object. The command works for all the primitive types, so it actually
 creates a geometry equidistant from the original geometry. So for example an ellipse
@@ -50,6 +50,11 @@ while negative values copy the object to `inside'. If the edit box is cleared or
 contains invalid distance value, the mouse controls both the position and the distance.
 If the edit box already contains a value from previous commands, you can reuse this value
 pressing the Enter key.
+
+Also for Ellipse, Arc Ellipse, Hyperbola and Parabola, it is possible to move the copied
+object further than is the smallest curve radius. In this case, while holding the Shift
+key, you can move beyond the curve center. This is especially usefull for Ellipse and
+Arc Ellipse.
 \item \textbf{Move} - this command is available with the shortcut ``Alt + M''. Once activated,
 two edit boxes appear in the status bar. You can enter the distance and the number of copies.
 If you don't specify the number of copies, or set it to zero, no copy is created and
@@ -106,6 +111,15 @@ actually something like undo for knife. If you realize that a primitive is trimm
 at a wrong place, and the line is actually ``shorter'' than it should be, you can simply
 activate the Extend command and click the end of the line, which should be extended.
 The clicked half of the line is then restored to the original, unbounded shape.
+
+\section{Break apart}
+\special{pdf: out 2 << /Title (\thesection. Break apart) /Dest [ @thispage /FitH @ypos ] >>}
+This command is available with the shortcut ``Alt + B''. When you copy one of the curves
+mention in the section~\ref{sec:copyobj}, item~\ref{sec:copypar}, and you will move the
+copy beyond the smallest curve radius, the curve is not smooth anymore. Invoking this
+command while such a curve is selected, the curve will be decomposed into smooth parts only.
+This can be usefull when trying to snap to the curve itself, since SteamCAD does not support
+anything like self crossing curves.
 
 \section{Rounding Objects}
 \special{pdf: out 2 << /Title (\thesection. Rounding Objects) /Dest [ @thispage /FitH @ypos ] >>}

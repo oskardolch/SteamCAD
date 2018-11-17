@@ -48,6 +48,7 @@ private:
 
     HPEN m_hRedPen;
     HPEN m_hSelPen;
+    HPEN m_hBrownPen;
 
     long m_lSelColor;
     long m_lHighColor;
@@ -66,6 +67,7 @@ private:
     wchar_t m_wsStatus2Msg[128];
     double m_dRestrictValue;
     int m_iRestrictSet;
+    double m_dSavedDist;
     wchar_t m_wsFileName[MAX_PATH];
 
     CDFileSetupRec m_cFSR;
@@ -87,7 +89,7 @@ private:
     PDStatDlg m_pStatDlg;
     PDSnapDlg m_pSnapDlg;
 
-    CDLine cMeasPoint1, cMeasPoint2;
+    CDLine m_cMeasPoint1, m_cMeasPoint2;
     bool m_bHasChanged;
     double m_dSavedAngle;
     CDLine m_cLastDynPt;
@@ -126,6 +128,7 @@ private:
     LRESULT ViewActSizeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     //LRESULT SnapCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iSnap);
     LRESULT ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool);
+    LRESULT ToolsBreakCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     LRESULT ToolsScaleCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     LRESULT ToolsStatCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     LRESULT HelpContentCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);

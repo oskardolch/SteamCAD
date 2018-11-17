@@ -289,6 +289,11 @@ INT_PTR CDDimEditDlg::OKBtnClick(HWND hWnd)
             m_pDimen->psLab = sNewMask;
         }
     }
+    else
+    {
+        if(m_pDimen->psLab) free(m_pDimen->psLab);
+        m_pDimen->psLab = NULL;
+    }
 
     wnd = GetDlgItem(hWnd, DED_CB_LEFTSHAPE);
     m_pDimen->iArrowType1 = SendMessage(wnd, CB_GETCURSEL, 0, 0);

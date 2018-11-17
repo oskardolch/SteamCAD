@@ -4,74 +4,74 @@
 
 CDPoint& CDPoint::operator+=(const CDPoint& p1)
 {
-	this->x += p1.x;
-	this->y += p1.y;
-	return(*this);
+    this->x += p1.x;
+    this->y += p1.y;
+    return(*this);
 }
 
 CDPoint& CDPoint::operator-=(const CDPoint& p1)
 {
-	this->x -= p1.x;
-	this->y -= p1.y;
-	return(*this);
+    this->x -= p1.x;
+    this->y -= p1.y;
+    return(*this);
 }
 
 CDPoint& CDPoint::operator*=(const double& d1)
 {
-	this->x *= d1;
-	this->y *= d1;
-	return(*this);
+    this->x *= d1;
+    this->y *= d1;
+    return(*this);
 }
 
 CDPoint& CDPoint::operator/=(const double& d1)
 {
-	this->x /= d1;
-	this->y /= d1;
-	return(*this);
+    this->x /= d1;
+    this->y /= d1;
+    return(*this);
 }
 
 CDPoint& CDPoint::operator=(const double& d1)
 {
-	this->x = d1;
-	this->y = d1;
-	return(*this);
+    this->x = d1;
+    this->y = d1;
+    return(*this);
 }
 
 CDPoint operator+(const CDPoint& p1, const CDPoint& p2)
 {
-	CDPoint cRes;
-	cRes.x = p1.x + p2.x;
-	cRes.y = p1.y + p2.y;
-	return(cRes);
+    CDPoint cRes;
+    cRes.x = p1.x + p2.x;
+    cRes.y = p1.y + p2.y;
+    return(cRes);
 }
 
 CDPoint operator-(const CDPoint& p1, const CDPoint& p2)
 {
-	CDPoint cRes;
-	cRes.x = p1.x - p2.x;
-	cRes.y = p1.y - p2.y;
-	return(cRes);
+    CDPoint cRes;
+    cRes.x = p1.x - p2.x;
+    cRes.y = p1.y - p2.y;
+    return(cRes);
 }
 
 double operator*(const CDPoint& p1, const CDPoint& p2)
 {
-	return(p1.x*p2.x + p1.y*p2.y);
+    return(p1.x*p2.x + p1.y*p2.y);
 }
 
 CDPoint operator*(const double& d1, const CDPoint& p2)
 {
-	CDPoint cRes;
-	cRes.x = d1*p2.x;
-	cRes.y = d1*p2.y;
-	return(cRes);
+    CDPoint cRes;
+    cRes.x = d1*p2.x;
+    cRes.y = d1*p2.y;
+    return(cRes);
 }
 
 CDPoint operator/(const CDPoint& p1, const double& d2)
 {
-	CDPoint cRes;
-	cRes.x = p1.x/d2;
-	cRes.y = p1.y/d2;
-	return(cRes);
+    CDPoint cRes;
+    cRes.x = p1.x/d2;
+    cRes.y = p1.y/d2;
+    return(cRes);
 }
 
 
@@ -113,7 +113,7 @@ int MultPolySubt(int iDeg11, int iDeg12, int iDeg21, int iDeg22,
 // BiLinear is a system of two polynomials in the form
 // x1 + x2*s + x3*t = 0
 // y1 + y2*s + y3*t = 0
-int SolveBiLinear(PDPoint ppCoefs, bool b01, PDPoint ppRes)
+int SolveBiLinear(PDPoint ppCoefs, PDPoint ppRes)
 {
     double dDet = ppCoefs[1].x*ppCoefs[2].y - ppCoefs[1].y*ppCoefs[2].x;
     if(fabs(dDet) < g_dPrec) return 0;
@@ -211,7 +211,43 @@ int SolveBiQuadratics(PDPoint ppCoefs, bool b01, PDPoint ppRes)
     return iSol;
 }
 
-int LineXLine(bool b01, CDPoint cPt1, CDPoint cDir1, CDPoint cPt2, CDPoint cDir2, PDPoint pRes)
+int SegXSeg(CDPoint cPt11, CDPoint cPt12, CDPoint cPt21, CDPoint cPt22, PDPoint pRes)
+{
+    CDPoint cCoefs[3];
+    cCoefs[0] = cPt11 - cPt21;
+    cCoefs[1] = cPt12 - cPt11;
+    cCoefs[2] = cPt21 - cPt22;
+
+    CDPoint cRes;
+    int iRes = SolveBiLinear(cCoefs, &cRes);
+    if(iRes < 1) return 0;
+    if(cRes.x < -g_dPrec) return 0;
+    if(cRes.x > g_dPrec) return 0;
+    if(cRes.y < -g_dPrec) return 0;
+    if(cRes.y > g_dPrec) return 0;
+
+    *pRes = cPt11 + cRes.x*cCoefs[1];
+    return 1;
+}
+
+int LineXSeg(CDPoint cLnOrg, CDPoint cLnDir, CDPoint cPt1, CDPoint cPt2, PDPoint pRes)
+{
+    CDPoint cCoefs[3];
+    cCoefs[0] = cLnOrg - cPt1;
+    cCoefs[1] = cLnDir;
+    cCoefs[2] = cPt1 - cPt2;
+
+    CDPoint cRes;
+    int iRes = SolveBiLinear(cCoefs, &cRes);
+    if(iRes < 1) return 0;
+    if(cRes.y < -g_dPrec) return 0;
+    if(cRes.y > g_dPrec) return 0;
+
+    *pRes = cLnOrg + cRes.x*cLnDir;
+    return 1;
+}
+
+int LineXLine(CDPoint cPt1, CDPoint cDir1, CDPoint cPt2, CDPoint cDir2, PDPoint pRes)
 {
     CDPoint cCoefs[3];
     cCoefs[0] = cPt1 - cPt2;
@@ -219,9 +255,9 @@ int LineXLine(bool b01, CDPoint cPt1, CDPoint cDir1, CDPoint cPt2, CDPoint cDir2
     cCoefs[2] = -1.0*cDir2;
 
     CDPoint cRes;
-    int iRes = SolveBiLinear(cCoefs, b01, &cRes);
+    int iRes = SolveBiLinear(cCoefs, &cRes);
 
-    if(iRes > 0) pRes[0] = cPt1 + cRes.x*cDir1;
+    if(iRes > 0) *pRes = cPt1 + cRes.x*cDir1;
 
     return iRes;
 }
@@ -259,14 +295,13 @@ int CircXLine(bool b01, CDPoint p11, double dRad, CDPoint p21, CDPoint p22, PDPo
     return iSol;
 }
 
-int QuadXLine(CDPoint p11, CDPoint p12, CDPoint p13,
-    CDPoint p21, CDPoint p22, PDPoint pRes, double *pdTs)
+int QuadXSeg(PDPoint pQuad, CDPoint cPt1, CDPoint cPt2, PDPoint pRes, double *pdTs)
 {
     CDPoint cCoefs[4];
-    cCoefs[0] = p11 - p21;
-    cCoefs[1] = 2.0*(p12 - p11);
-    cCoefs[2] = p13 - 2.0*p12 + p11;
-    cCoefs[3] = p22 - p21;
+    cCoefs[0] = pQuad[0] - cPt1;
+    cCoefs[1] = 2.0*(pQuad[1] - pQuad[0]);
+    cCoefs[2] = pQuad[2] - 2.0*pQuad[1] + pQuad[0];
+    cCoefs[3] = cPt2 - cPt1;
 
     double pPoly11[3], pPoly12[3];
     for(int i = 0; i < 3; i++)
@@ -290,9 +325,12 @@ int QuadXLine(CDPoint p11, CDPoint p12, CDPoint p13,
 
         for(int i = 0; i < iRoots; i++)
         {
-            dVal = EvaluatePolynom(iDeg2, pPoly12, dRoots[i])/cCoefs[4].y;
-            pdTs[iSol] = dRoots[i];
-            pRes[iSol++] = p21 + dVal*cCoefs[3];
+            dVal = EvaluatePolynom(iDeg2, pPoly12, dRoots[i])/cCoefs[3].y;
+            if((dVal > -g_dPrec) && (dVal < 1.0 + g_dPrec))
+            {
+                pdTs[iSol] = dRoots[i];
+                pRes[iSol++] = cPt1 + dVal*cCoefs[3];
+            }
         }
 
         return iSol;
@@ -304,15 +342,18 @@ int QuadXLine(CDPoint p11, CDPoint p12, CDPoint p13,
 
         for(int i = 0; i < iRoots; i++)
         {
-            dVal = EvaluatePolynom(iDeg1, pPoly11, dRoots[i])/cCoefs[4].x;
-            pdTs[iSol] = dRoots[i];
-            pRes[iSol++] = p21 + dVal*cCoefs[3];
+            dVal = EvaluatePolynom(iDeg1, pPoly11, dRoots[i])/cCoefs[3].x;
+            if((dVal > -g_dPrec) && (dVal < 1.0 + g_dPrec))
+            {
+                pdTs[iSol] = dRoots[i];
+                pRes[iSol++] = cPt1 + dVal*cCoefs[3];
+            }
         }
 
         return iSol;
     }
 
-    double dPolyRes[2];
+    double dPolyRes[3];
     int iDegRes = MultPolySubt(iDeg1, iDeg2, 0, 0, pPoly11, pPoly12,
         &cCoefs[3].x, &cCoefs[3].y, dPolyRes);
 
@@ -321,8 +362,78 @@ int QuadXLine(CDPoint p11, CDPoint p12, CDPoint p13,
     for(int i = 0; i < iRoots; i++)
     {
         dVal = EvaluatePolynom(iDeg1, pPoly11, dRoots[i])/cCoefs[3].x;
+        if((dVal > -g_dPrec) && (dVal < 1.0 + g_dPrec))
+        {
+            pdTs[iSol] = dRoots[i];
+            pRes[iSol++] = cPt1 + dVal*cCoefs[3];
+        }
+    }
+
+    return iSol;
+}
+
+int QuadXLine(PDPoint pQuad, CDPoint cLnOrg, CDPoint cLnDir, PDPoint pRes, double *pdTs)
+{
+    CDPoint cCoefs[3];
+    cCoefs[0] = pQuad[0] - cLnOrg;
+    cCoefs[1] = 2.0*(pQuad[1] - pQuad[0]);
+    cCoefs[2] = pQuad[2] - 2.0*pQuad[1] + pQuad[0];
+
+    double pPoly11[3], pPoly12[3];
+    for(int i = 0; i < 3; i++)
+    {
+        pPoly11[i] = cCoefs[i].x;
+        pPoly12[i] = cCoefs[i].y;
+    }
+
+    int iDeg1, iDeg2, iRoots;
+    double dRoots[2], dVal;
+    int iSol = 0;
+
+    iDeg1 = GetPolyDegree(2, pPoly11);
+    iDeg2 = GetPolyDegree(2, pPoly12);
+
+    if(fabs(cLnDir.x) < g_dPrec)
+    {
+        if(fabs(cLnDir.y) < g_dPrec) return 0;
+
+        iRoots = SolvePolynom01(iDeg1, pPoly11, dRoots);
+
+        for(int i = 0; i < iRoots; i++)
+        {
+            dVal = EvaluatePolynom(iDeg2, pPoly12, dRoots[i])/cLnDir.y;
+            pdTs[iSol] = dRoots[i];
+            pRes[iSol++] = cLnOrg + dVal*cLnDir;
+        }
+
+        return iSol;
+    }
+
+    if(fabs(cLnDir.y) < g_dPrec)
+    {
+        iRoots = SolvePolynom01(iDeg2, pPoly12, dRoots);
+
+        for(int i = 0; i < iRoots; i++)
+        {
+            dVal = EvaluatePolynom(iDeg1, pPoly11, dRoots[i])/cLnDir.x;
+            pdTs[iSol] = dRoots[i];
+            pRes[iSol++] = cLnOrg + dVal*cLnDir;
+        }
+
+        return iSol;
+    }
+
+    double dPolyRes[3];
+    int iDegRes = MultPolySubt(iDeg1, iDeg2, 0, 0, pPoly11, pPoly12,
+        &cLnDir.x, &cLnDir.y, dPolyRes);
+
+    iRoots = SolvePolynom01(iDegRes, dPolyRes, dRoots);
+
+    for(int i = 0; i < iRoots; i++)
+    {
+        dVal = EvaluatePolynom(iDeg1, pPoly11, dRoots[i])/cLnDir.x;
         pdTs[iSol] = dRoots[i];
-        pRes[iSol++] = p21 + dVal*cCoefs[3];
+        pRes[iSol++] = cLnOrg + dVal*cLnDir;
     }
 
     return iSol;
@@ -382,7 +493,7 @@ int BezXLine(CDPoint p11, CDPoint p12, CDPoint p13, CDPoint p14,
         return iSol;
     }
 
-    double dPolyRes[3];
+    double dPolyRes[4];
     int iDegRes = MultPolySubt(iDeg1, iDeg2, 0, 0, pPoly11, pPoly12,
         &cCoefs[4].x, &cCoefs[4].y, dPolyRes);
 
@@ -409,7 +520,7 @@ double GetCircOrigin(CDPoint cp1, CDPoint cp2, CDPoint cp3, PDPoint pRes)
     CDPoint cDir1 = VectProd(cp1, cp2);
     CDPoint cDir2 = VectProd(cp2, cp3);
 
-    int iX = LineXLine(false, cMid1, cDir1, cMid2, cDir2, pRes);
+    int iX = LineXLine(cMid1, cDir1, cMid2, cDir2, pRes);
 
     if(iX > 0) return GetDist(cp1, *pRes);
 
@@ -471,3 +582,4 @@ void SubstituteBiQuad(double *pdCoefs, CDPoint cRot, CDPoint cShift)
     pdCoefs[4] = dCoefs1[4];
     pdCoefs[5] = dCoefs1[5];
 }
+

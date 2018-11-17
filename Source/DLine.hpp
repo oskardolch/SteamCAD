@@ -4,9 +4,9 @@
 #include "DDataTypes.hpp"
 
 bool AddLinePoint(double x, double y, char iCtrl, PDPointList pPoints);
-bool BuildLineCache(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDPointList pPoints, PDPointList pCache,
+bool BuildLineCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
     double *pdMovedDist);
-int BuildLinePrimitives(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildLinePrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDRefPoint pBounds, double dOffset,
     double *pdMovedDist, PDPoint pDrawBnds);
 double GetLineDistFromPt(CDPoint cPt, PDPointList pCache, PDLine pPtX);

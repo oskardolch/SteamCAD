@@ -129,7 +129,7 @@ BEGIN
     POPUP "&Tools"
     BEGIN
         MENUITEM "&Knife\tAlt+K", IDM_TOOLSKNIFE
-        //MENUITEM "&Bevel\tCtrl+B", IDM_TOOLSBEVEL
+        MENUITEM "&Break apart\tAlt+B", IDM_TOOLSBREAK
         MENUITEM "&Round\tCtrl+B", IDM_TOOLSROUND
         MENUITEM "&Extend\tCtrl+E", IDM_TOOLSEXTEND
         MENUITEM "Mark con&flicts\tCtrl+F", IDM_TOOLSCONFLICTS
@@ -176,6 +176,7 @@ BEGIN
     "^P", IDM_EDITPAPERUNITS
     "^K", IDM_TOOLSKNIFE
     "K", IDM_TOOLSKNIFE, ALT, VIRTKEY
+    "B", IDM_TOOLSBREAK, ALT, VIRTKEY
     "^B", IDM_TOOLSROUND
     "^E", IDM_TOOLSEXTEND
     "^F", IDM_TOOLSCONFLICTS

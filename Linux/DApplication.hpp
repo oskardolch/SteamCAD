@@ -14,13 +14,13 @@
 typedef class CDApplication
 {
 private:
-	GtkWidget *m_pMainWnd;
-	char m_sAppPath[32];
-	gint m_iLeft, m_iTop, m_iWidth, m_iHeight;
-	GdkGravity m_grav;
+    GtkWidget *m_pMainWnd;
+    char m_sAppPath[32];
+    gint m_iLeft, m_iTop, m_iWidth, m_iHeight;
+    GdkGravity m_grav;
     double m_dDeviceToUnitScale;
 
-	bool m_bSettingProps;
+    bool m_bSettingProps;
 
     PDataList m_pDrawObjects;
     PDataList m_pUndoObjects;
@@ -75,6 +75,7 @@ private:
     int m_iRestrictSet;
 
     double m_dSavedAngle;
+    double m_dSavedDist;
 
     PDFileSetupDlg m_pFileSetupDlg;
     PDLineStyleDlg m_pLineStyleDlg;
@@ -83,11 +84,11 @@ private:
     PDSnapDlg m_pSnapDlg;
     PDScaleDlg m_pScaleDlg;
 		
-	void SaveSettings();
-	void RestoreSettings();
+    void SaveSettings();
+    void RestoreSettings();
     GtkWidget* GetMenuBar();
     GtkWidget* GetDrawing();
-	GtkWidget* GetStatusBar();
+    GtkWidget* GetStatusBar();
 
     void SetStatusBarMsg(int iPanel, const gchar *pMsg);
     void FileNewCmd(bool bFromAccel);
@@ -133,6 +134,7 @@ private:
 
     void SetMode(int iNewMode, bool bFromAccel);
     void SetTool(int iNewTool);
+    void ToolsBreakCmd();
     void ToolsStatCmd();
     void ToolsScaleCmd();
 
@@ -144,10 +146,10 @@ private:
 
     void StartNewObject();    
 public:	
-	CDApplication(const char *psAppPath);
-	~CDApplication();
-	GtkWidget* GetMainWindow();
-	void SetPosition(gint iLeft, gint iTop, gint iWidth, gint iHeight, GdkGravity iGrav);
+    CDApplication(const char *psAppPath);
+    ~CDApplication();
+    GtkWidget* GetMainWindow();
+    void SetPosition(gint iLeft, gint iTop, gint iWidth, gint iHeight, GdkGravity iGrav);
     void SetFileSetupDlg(gint iLeft, gint iTop);
     void SetLineStyleDlg(gint iLeft, gint iTop);
     void SetDimEditDlg(gint iLeft, gint iTop);
@@ -155,7 +157,7 @@ public:
     void SetSnapDlg(gint iLeft, gint iTop);
     void SetScaleDlg(gint iLeft, gint iTop);
     void SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, const gchar *sPath);
-	void Terminate();
+    gboolean Terminate();
     void SetPageSettings(PDFileSetupRec pFSR);
     void SetPaperSize(PDFileSetupRec pFSR);
     void SetLengthUnit(PDFileSetupRec pFSR);

@@ -27,9 +27,6 @@ private:
     int m_iY;
     bool m_bSettingUp;
     PDScaleRec m_pSR;
-    bool m_bWidthChanged;
-    bool m_bExcChanged;
-    bool m_bPatChanged;
 
     INT_PTR OKBtnClick(HWND hWnd);
     INT_PTR ScaleDrawChange(HWND hWnd, WORD wNotifyCode, HWND hwndCtl);

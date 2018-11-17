@@ -13,11 +13,11 @@ extern HWND g_hStatus;*/
 
 bool AddEvolvPoint(double x, double y, char iCtrl, PDPointList pPoints, int iInputLines)
 {
-    if(iCtrl == 2)
+    if(iCtrl > 1)
     {
         int nOffs = pPoints->GetCount(2);
-        if(nOffs > 0) pPoints->SetPoint(0, 2, x, y, iCtrl);
-        else pPoints->AddPoint(x, y, iCtrl);
+        if(nOffs > 0) pPoints->SetPoint(0, 2, x, y, 2);
+        else pPoints->AddPoint(x, y, 2);
         return true;
     }
 
@@ -36,7 +36,7 @@ bool AddEvolvPoint(double x, double y, char iCtrl, PDPointList pPoints, int iInp
     return bRes;
 }
 
-bool BuildEvolvCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
+bool BuildEvolvCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
     PDLine pCircle, double *pdDist)
 {
     pCache->ClearAll();
@@ -53,7 +53,7 @@ bool BuildEvolvCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList
     int nNorm = pPoints->GetCount(0);
 
     if(nNorm > 0) cPt1 = pPoints->GetPoint(0, 0).cPoint - cOrig;
-    else if(iMode == 1) cPt1 = *pTmpPt - cOrig;
+    else if(iMode == 1) cPt1 = cTmpPt.cOrigin - cOrig;
     else return false;
 
     dr2 = GetNorm(cPt1);
@@ -66,7 +66,7 @@ bool BuildEvolvCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList
 
     if((nNorm > 0) && (iMode == 1))
     {
-        cPt2 = Rotate(*pTmpPt - cOrig, cN2, false);
+        cPt2 = Rotate(cTmpPt.cOrigin - cOrig, cN2, false);
         if(cPt2.y < 0) dDir = -1.0;
     }
     else if(nNorm > 1)
@@ -94,7 +94,7 @@ bool BuildEvolvCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList
     int nOffs = pPoints->GetCount(2);
     if((iMode == 2) || (nOffs > 0))
     {
-        if(iMode == 2) cPt1 = *pTmpPt;
+        if(iMode == 2) cPt1 = cTmpPt.cOrigin;
         else cPt1 = pPoints->GetPoint(0, 2).cPoint;
 
         CDLine cPtX;
@@ -261,7 +261,7 @@ int AddEvolvSegQuadsWithBounds(double dt1, double dt2, CDPoint cOrig, CDPoint cM
         cDir2.x = dco;
         cDir2.y = dDir*dsi;
 
-        LineXLine(false, cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
+        LineXLine(cTmpPrim.cPt1, cDir1, cTmpPrim.cPt3, cDir2, &cTmpPrim.cPt2);
 
         cPrim.cPt1 = cOrig + Rotate(cTmpPrim.cPt1, cMainDir, true);
         cPrim.cPt2 = cOrig + Rotate(cTmpPrim.cPt2, cMainDir, true);
@@ -275,11 +275,11 @@ int AddEvolvSegQuadsWithBounds(double dt1, double dt2, CDPoint cOrig, CDPoint cM
     return iRes;
 }
 
-int BuildEvolvPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildEvolvPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDLine pCircle, PDRefPoint pBounds, double dOffset,
     double *pdDist, PDPoint pDrawBnds, bool bQuadsOnly)
 {
-    if(pTmpPt) BuildEvolvCache(pTmpPt, iMode, pPoints, pCache, pCircle, pdDist);
+    if(iMode > 0) BuildEvolvCache(cTmpPt, iMode, pPoints, pCache, pCircle, pdDist);
 
     int iCnt = pCache->GetCount(0);
     if(iCnt < 3) return 0;

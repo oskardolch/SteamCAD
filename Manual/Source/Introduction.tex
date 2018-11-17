@@ -83,9 +83,21 @@ and gtk+-dev. Then download the source code and run ``make main'' from the conso
 the application, copy the files DPapers.ini and DUnits.ini from the Papers fodler into the
 /home/<me>/.SteamCAD folder. The meaning of the ini files will be explained later.
 
+The compilation steps on Debian based systems might look as the following:
+\begin{verbatim}
+$ sudo apt-get install gcc libcairo2-dev gtk+-dev
+$ git clone https://github.com/oskardolch/SteamCAD.git
+$ cd SteamCAD
+$ mkdir Build
+$ make libdxflib.a
+$ make main
+\end{verbatim}
+
+Then you can run SteamCAD from the Build folder or copy the executable file anywhere.
+
 Building of the software on MS Windows is not straightforward, since it involves building of
 the cairo.dll. So the best is to download the zip with binaries for either 32bit or for 64bit
-platform. Note that Windows XP ond older systems are not supported by the provided build. If
+platform. Note that Windows XP and older systems are not supported by the provided build. If
 you want to run it on an unsuported Windows system, you should compile it yourself.
 
 There is no installation utility provided for MS Windows, just unzip the package into a directory

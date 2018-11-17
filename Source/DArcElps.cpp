@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include "DPrimitive.hpp"
 
+#include <stdio.h>
+
 // for debugging purpose only
 /*#include <windows.h>
 #include <commctrl.h>
@@ -13,10 +15,12 @@ extern HWND g_hStatus;*/
 
 bool AddArcElpsPoint(double x, double y, char iCtrl, PDPointList pPoints, int iInputLines)
 {
-    if(iCtrl == 2)
+    if((iCtrl == 2) || (iCtrl == 3))
     {
-        int nOffs = pPoints->GetCount(2);
-        if(nOffs > 0) pPoints->SetPoint(0, 2, x, y, iCtrl);
+        int nOffs2 = pPoints->GetCount(2);
+        int nOffs3 = pPoints->GetCount(3);
+        if(nOffs2 > 0) pPoints->SetPoint(0, 2, x, y, iCtrl);
+        else if(nOffs3 > 0) pPoints->SetPoint(0, 3, x, y, iCtrl);
         else pPoints->AddPoint(x, y, iCtrl);
         return true;
     }
@@ -75,31 +79,60 @@ CDPoint DAEFuncY(CDPoint cPt1, CDPoint cPt2, CDPoint cPtSol)
     return cRes;
 }
 
-void UpdateOffsets(int iMode, int nOffs, PDPoint pTmpPt, PDPointList pPoints,
+void UpdateOffsets(int iMode, int nOffs2, int nOffs3, CDLine cTmpPt, PDPointList pPoints,
     PDPointList pCache, double *pdMovedDist)
 {
-    if((iMode == 2) || (nOffs > 0))
+    if((iMode == 2) && (cTmpPt.cDirection.x > 0.5))
+    {
+        if(pdMovedDist) *pdMovedDist = cTmpPt.cDirection.y;
+        pCache->AddPoint(cTmpPt.cDirection.y, 0.0, 2);
+        return;
+    }
+
+    if((iMode == 2) || (nOffs2 > 0) || (nOffs3 > 0))
     {
         CDPoint cPt1;
+        int iMask = 0;
 
-        if(iMode == 2) cPt1 = *pTmpPt;
-        else if(nOffs > 0) cPt1 = pPoints->GetPoint(0, 2).cPoint;
-        else return;
-
-        CDLine cPtX;
-        double dExt = GetArcElpsDistFromPt(cPt1, cPt1, pCache, &cPtX);
-        double dExtOld = 0.0;
-        if((iMode == 2) && (nOffs > 0))
+        if(iMode == 2)
+        {
+            cPt1 = cTmpPt.cOrigin;
+            if(cTmpPt.cDirection.x < -0.5) iMask = 2;
+        }
+        else if(nOffs2 > 0)
         {
             cPt1 = pPoints->GetPoint(0, 2).cPoint;
-            dExtOld = GetArcElpsDistFromPt(cPt1, cPt1, pCache, &cPtX);
+        }
+        else if(nOffs3 > 0)
+        {
+            cPt1 = pPoints->GetPoint(0, 3).cPoint;
+            iMask = 2;
+        }
+
+        CDLine cPtX;
+        double dExt = 0.0;
+        double dExtOld = 0.0;
+        dExt = GetArcElpsDistFromPt(cPt1, cPt1, iMask, pCache, &cPtX, NULL);
+
+        if(iMode == 2)
+        {
+            if(nOffs2 > 0)
+            {
+                cPt1 = pPoints->GetPoint(0, 2).cPoint;
+                dExtOld = GetArcElpsDistFromPt(cPt1, cPt1, 0, pCache, &cPtX, NULL);
+            }
+            else if(nOffs3 > 0)
+            {
+                cPt1 = pPoints->GetPoint(0, 3).cPoint;
+                dExtOld = GetArcElpsDistFromPt(cPt1, cPt1, 2, pCache, &cPtX, NULL);
+            }
         }
         if(pdMovedDist) *pdMovedDist = dExt - dExtOld;
         pCache->AddPoint(dExt, dExtOld, 2);
     }
 }
 
-bool BuildArcElpsCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
+bool BuildArcElpsCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
     PDLine pLines, double *pdMovedDist)
 {
 /*wchar_t buf[128];
@@ -108,7 +141,8 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
     pCache->ClearAll();
 
     int nNorm = pPoints->GetCount(0);
-    int nOffs = pPoints->GetCount(2);
+    int nOffs2 = pPoints->GetCount(2);
+    int nOffs3 = pPoints->GetCount(3);
 
     CDInputPoint cInPt1, cInPt2;
     CDPoint cOrig, cMainDir, cPt1, cPt2;
@@ -121,14 +155,14 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
     CDPoint cDir1 = pLines[0].cDirection;
     CDPoint cDir2 = pLines[1].cDirection;
 
-    int iX = LineXLine(false, pLines[0].cOrigin, cDir1, pLines[1].cOrigin, cDir2, &cOrig);
+    int iX = LineXLine(pLines[0].cOrigin, cDir1, pLines[1].cOrigin, cDir2, &cOrig);
     if(iX < 1) return false;
 
     bool bTwoPoints = false;
 
     if(((nNorm < 1) && (iMode == 1)) || ((nNorm == 1) && (iMode != 1)))
     {
-        if(iMode == 1) cInPt1.cPoint = *pTmpPt - cOrig;
+        if(iMode == 1) cInPt1.cPoint = cTmpPt.cOrigin - cOrig;
         else if(nNorm > 0) cInPt1.cPoint = pPoints->GetPoint(0, 0).cPoint - cOrig;
         else return false;
 
@@ -142,7 +176,7 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
     else if(nNorm > 0)
     {
         cInPt1.cPoint = pPoints->GetPoint(0, 0).cPoint - cOrig;
-        if(iMode == 1) cInPt2.cPoint = *pTmpPt - cOrig;
+        if(iMode == 1) cInPt2.cPoint = cTmpPt.cOrigin - cOrig;
         else if(nNorm > 1) cInPt2.cPoint = pPoints->GetPoint(1, 0).cPoint - cOrig;
         else return false;
 
@@ -221,18 +255,37 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
     {
         pCache->AddPoint(cOrig.x, cOrig.y, 0);
         pCache->AddPoint(da, da, 0);
-        if((iMode == 2) || (nOffs > 0))
+        if((iMode == 2) || (nOffs2 > 0) || (nOffs3 > 0))
         {
             double dExt;
             double dExtOld = 0.0;
-            if(iMode == 2) dExt = GetDist(*pTmpPt, cOrig) - da;
-            if(nOffs > 0)
+            if(iMode == 2)
             {
-                cPt1 = pCache->GetPoint(0, 2).cPoint;
+                if(cTmpPt.cDirection.x > 0.5) dExt = cTmpPt.cDirection.y;
+                else
+                {
+                    dExt = GetDist(cTmpPt.cOrigin, cOrig);
+                    if(cTmpPt.cDirection.x < -0.5)
+                    {
+                        dExt += da;
+                        dExt *= -1.0;
+                    }
+                    else dExt -= da;
+                }
+            }
+            if(nOffs2 > 0)
+            {
+                cPt1 = pPoints->GetPoint(0, 2).cPoint;
                 if(iMode == 2) dExtOld = GetDist(cPt1, cOrig) - da;
                 else dExt = GetDist(cPt1, cOrig) - da;
             }
-            *pdMovedDist = dExt - dExtOld;
+            else if(nOffs3 > 0)
+            {
+                cPt1 = pPoints->GetPoint(0, 3).cPoint;
+                if(iMode == 2) dExtOld = -(GetDist(cPt1, cOrig) + da);
+                else dExt = -(GetDist(cPt1, cOrig) + da);
+            }
+            if(pdMovedDist) *pdMovedDist = dExt - dExtOld;
             pCache->AddPoint(dExt, dExtOld, 2);
         }
         return true;
@@ -289,7 +342,7 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
                 pCache->AddPoint(cMainDir.x, cMainDir.y, 0);
                 pCache->AddPoint(cDir1.x, cDir1.y, 0);
                 pCache->AddPoint(cInter.x, cInter.y, 0);
-                UpdateOffsets(iMode, nOffs, pTmpPt, pPoints, pCache, pdMovedDist);
+                UpdateOffsets(iMode, nOffs2, nOffs3, cTmpPt, pPoints, pCache, pdMovedDist);
                 return true;
             }
         }
@@ -335,7 +388,7 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
             pCache->AddPoint(cMainDir.x, cMainDir.y, 0);
             pCache->AddPoint(cDir1.x, cDir1.y, 0);
             pCache->AddPoint(cInter.x, cInter.y, 0);
-            UpdateOffsets(iMode, nOffs, pTmpPt, pPoints, pCache, pdMovedDist);
+            UpdateOffsets(iMode, nOffs2, nOffs3, cTmpPt, pPoints, pCache, pdMovedDist);
         }
         return true;
     }
@@ -399,7 +452,7 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
     pCache->AddPoint(cSol.x, cSol.y, 0);
     pCache->AddPoint(cInter.x, cInter.y, 0);
 
-    UpdateOffsets(iMode, nOffs, pTmpPt, pPoints, pCache, pdMovedDist);
+    UpdateOffsets(iMode, nOffs2, nOffs3, cTmpPt, pPoints, pCache, pdMovedDist);
     return true;
 }
 
@@ -408,8 +461,11 @@ CDPrimitive GetArcPrimitive(double dRad, CDPoint cCenter, double da1, double da2
     CDPrimitive cRes;
     cRes.iType = 2;
     cRes.cPt1 = cCenter;
-    cRes.cPt2.x = cCenter.x + dRad;
-    cRes.cPt2.y = cCenter.y + dRad;
+
+    double dr = fabs(dRad);
+    cRes.cPt2.x = cCenter.x + dr;
+    cRes.cPt2.y = cCenter.y + dr;
+
     cRes.cPt3.x = cCenter.x + dRad*cos(da2);
     cRes.cPt3.y = cCenter.y + dRad*sin(da2);
     cRes.cPt4.x = cCenter.x + dRad*cos(da1);
@@ -431,13 +487,13 @@ CDPrimitive TransArcPrimitive(CDPoint cOrig, CDPoint cMainDir, CDPrimitive cPrim
 }
 
 int AddArcPrimitiveWithBounds(CDPoint cRad, CDPoint cOrig, CDPoint cMainDir, CDPoint cSol,
-    PDRect pRect, PDPrimObject pPrimList, double d1, double d2)
+    PDRect pRect, PDPrimObject pPrimList, double d1, double d2, bool bFullCycle)
 {
     double dAng = atan2(cSol.y, cSol.x);
     double db1 = M_PI - dAng;
 
     double dBnds[4];
-    int iSegs = MergeBounds(d1, d2, db1, -db1, dBnds);
+    int iSegs = MergeBounds(d1, d2, db1, -db1, bFullCycle, dBnds);
 
     CDPoint cCenter = {-cSol.x, 0.0};
     int iRes = -1;
@@ -453,7 +509,7 @@ int AddArcPrimitiveWithBounds(CDPoint cRad, CDPoint cOrig, CDPoint cMainDir, CDP
         else if(iRes != k) iRes = 1;
     }
 
-    iSegs = MergeBounds(d1, d2, -db1, -dAng, dBnds);
+    iSegs = MergeBounds(d1, d2, -db1, -dAng, bFullCycle, dBnds);
     cCenter.x = 0.0;
     cCenter.y = cSol.y;
 
@@ -466,7 +522,7 @@ int AddArcPrimitiveWithBounds(CDPoint cRad, CDPoint cOrig, CDPoint cMainDir, CDP
         else if(iRes != k) iRes = 1;
     }
 
-    iSegs = MergeBounds(d1, d2, -dAng, dAng, dBnds);
+    iSegs = MergeBounds(d1, d2, -dAng, dAng, bFullCycle, dBnds);
     cCenter.x = cSol.x;
     cCenter.y = 0.0;
 
@@ -479,7 +535,7 @@ int AddArcPrimitiveWithBounds(CDPoint cRad, CDPoint cOrig, CDPoint cMainDir, CDP
         else if(iRes != k) iRes = 1;
     }
 
-    iSegs = MergeBounds(d1, d2, dAng, db1, dBnds);
+    iSegs = MergeBounds(d1, d2, dAng, db1, bFullCycle, dBnds);
     cCenter.x = 0.0;
     cCenter.y = -cSol.y;
 
@@ -496,7 +552,7 @@ int AddArcPrimitiveWithBounds(CDPoint cRad, CDPoint cOrig, CDPoint cMainDir, CDP
     return iRes;
 }
 
-int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildArcElpsPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDLine pLines, PDRefPoint pBounds, double dOffset,
     double *pdMovedDist, PDPoint pDrawBnds)
 {
@@ -504,7 +560,7 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
     if(pLines[0].bIsSet) iInputLines++;
     if(pLines[1].bIsSet) iInputLines++;*/
 
-    if(pTmpPt) BuildArcElpsCache(pTmpPt, iMode, pPoints, pCache, pLines, pdMovedDist);
+    if(iMode > 0) BuildArcElpsCache(cTmpPt, iMode, pPoints, pCache, pLines, pdMovedDist);
 
     int iCnt = pCache->GetCount(0);
     if(iCnt < 2) return 0;
@@ -527,10 +583,11 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
     }
 
     CDPoint cMainDir = {1.0, 0.0};
+    double rx = fabs(cRad.x);
 
     if(iCnt < 3)
     {
-        pDrawBnds->y = cRad.x*M_PI;
+        pDrawBnds->y = rx*M_PI;
         pDrawBnds->x = -pDrawBnds->y;
 
         cPrimPt.iType = 7;
@@ -544,7 +601,7 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
         if(pBounds[0].bIsSet && pBounds[1].bIsSet)
         {
             double dBnds[4];
-            int iSegs = MergeBounds(pBounds[0].dRef, pBounds[1].dRef, -M_PI, M_PI, dBnds);
+            int iSegs = MergeBounds(-M_PI, M_PI, pBounds[0].dRef, pBounds[1].dRef, true, dBnds);
 
             CDPoint cCenter = {0.0, 0.0};
             int iRes = -1;
@@ -564,8 +621,8 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
 
         cPrim.iType = 3;
         cPrim.cPt1 = cOrig;
-        cPrim.cPt2.x = cOrig.x + cRad.x;
-        cPrim.cPt2.y = cOrig.y + cRad.x;
+        cPrim.cPt2.x = cOrig.x + rx;
+        cPrim.cPt2.y = cOrig.y + rx;
         return CropPrimitive(cPrim, pRect, pPrimList);
     }
 
@@ -576,7 +633,8 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
     //CDPoint cInter = pCache->GetPoint(4, 0).cPoint;
 
     double dAng = atan2(cSol.y, cSol.x);
-    pDrawBnds->y = 2.0*dAng*(cRad.x - cRad.y) + M_PI*cRad.y;
+    double ry = fabs(cRad.y);
+    pDrawBnds->y = 2.0*dAng*(rx - ry) + M_PI*ry;
     pDrawBnds->x = -pDrawBnds->y;
 
     CDPoint cCenter;
@@ -607,10 +665,10 @@ int BuildArcElpsPrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList 
 
     if(pBounds[0].bIsSet && pBounds[1].bIsSet)
         return AddArcPrimitiveWithBounds(cRad, cOrig, cMainDir, cSol, pRect, pPrimList,
-            pBounds[0].dRef, pBounds[1].dRef);
+            pBounds[0].dRef, pBounds[1].dRef, false);
 
     return AddArcPrimitiveWithBounds(cRad, cOrig, cMainDir, cSol, pRect, pPrimList,
-        dAng - M_PI, dAng + M_PI);
+        dAng - M_PI, dAng + M_PI, true);
 }
 
 int GetArcElpsProjCenter(CDPoint cSol, CDPoint cPt, char *piCenters)
@@ -631,63 +689,72 @@ int GetArcElpsProjCenter(CDPoint cSol, CDPoint cPt, char *piCenters)
     cDir.y *= -1.0;
     cPos[3] = Rotate(cPt - cOrig, cDir, false);
 
-    if((cPos[0].y < 0) && (cPos[1].y > 0))
+    // 1
+    if((cPos[0].y < -g_dPrec) && (cPos[1].y > g_dPrec))
     {
         piCenters[0] = 0;
         piCenters[1] = 2;
         return 2;
     }
 
-    if((cPos[2].y < 0) && (cPos[3].y > 0))
+    // 2
+    if((cPos[2].y < -g_dPrec) && (cPos[3].y > g_dPrec))
     {
         piCenters[0] = 2;
         piCenters[1] = 0;
         return 2;
     }
 
-    if((cPos[1].y > 0) && (cPos[2].y < 0))
+    // 3
+    if((cPos[1].y > g_dPrec) && (cPos[2].y < -g_dPrec))
     {
         piCenters[0] = 1;
         piCenters[1] = 3;
         return 2;
     }
 
-    if((cPos[0].y < 0) && (cPos[3].y > 0))
+    // 4
+    if((cPos[0].y < -g_dPrec) && (cPos[3].y > g_dPrec))
     {
         piCenters[0] = 3;
         piCenters[1] = 1;
         return 2;
     }
 
-    if((cPos[0].y > 0) && (cPos[1].y > 0))
+    // 5
+    if((cPos[0].y > g_dPrec) && (cPos[1].y > g_dPrec))
     {
         piCenters[0] = 1;
         piCenters[1] = 2;
         return 2;
     }
 
-    if((cPos[0].y < 0) && (cPos[1].y < 0))
+    // 6
+    if((cPos[0].y < -g_dPrec) && (cPos[1].y < -g_dPrec))
     {
         piCenters[0] = 3;
         piCenters[1] = 2;
         return 2;
     }
 
-    if((cPos[2].y < 0) && (cPos[3].y < 0))
+    // 7
+    if((cPos[2].y < -g_dPrec) && (cPos[3].y < -g_dPrec))
     {
         piCenters[0] = 1;
         piCenters[1] = 0;
         return 2;
     }
 
-    if((cPos[2].y > 0) && (cPos[3].y > 0))
+    // 8
+    if((cPos[2].y > g_dPrec) && (cPos[3].y > g_dPrec))
     {
         piCenters[0] = 3;
         piCenters[1] = 0;
         return 2;
     }
 
-    if(cPt.y > 0)
+    // 9
+    if(cPt.y > g_dPrec)
     {
         piCenters[0] = 1;
         piCenters[1] = 3;
@@ -696,6 +763,7 @@ int GetArcElpsProjCenter(CDPoint cSol, CDPoint cPt, char *piCenters)
         return 4;
     }
 
+    // 10
     piCenters[0] = 3;
     piCenters[1] = 1;
     piCenters[2] = 0;
@@ -731,7 +799,36 @@ double GetCenterAndRad(int iCenter, CDPoint cRad, CDPoint cSol, PDPoint pCenter)
     return cRad.y;
 }
 
-double GetArcElpsDistFromPt(CDPoint cPt, CDPoint cRefPt, PDPointList pCache, PDLine pPtX)
+double GetArcElpsNorm(int iCenter, CDPoint cDir, PDPoint pNorm)
+{
+    double dNorm = GetNorm(cDir);
+    if(dNorm < g_dPrec)
+    {
+        switch(iCenter)
+        {
+        case 0:
+            pNorm->x = -1.0;
+            pNorm->y = 0.0;
+            break;
+        case 1:
+            pNorm->x = 0.0;
+            pNorm->y = 1.0;
+            break;
+        case 2:
+            pNorm->x = 1.0;
+            pNorm->y = 0.0;
+            break;
+        case 3:
+            pNorm->x = 0.0;
+            pNorm->y = -1.0;
+            break;
+        }
+    }
+    else *pNorm = cDir/dNorm;
+    return dNorm;
+}
+
+double GetArcElpsDistFromPt(CDPoint cPt, CDPoint cRefPt, int iSrchMask, PDPointList pCache, PDLine pPtX, PDRefPoint pBounds)
 {
     pPtX->bIsSet = false;
     pPtX->dRef = 0.0;
@@ -755,39 +852,40 @@ double GetArcElpsDistFromPt(CDPoint cPt, CDPoint cRefPt, PDPointList pCache, PDL
     }
 
     double dRes, dMin, dNorm, d1;
-    bool bArc;
     bool bIsNearCenter = true;
+    bool bCenters = (iSrchMask & 1);
+    bool bReverse = false;
 
     if(iCnt < 3)
     {
-        cDir = cPt - cOrig;
+        bReverse = cRad.x < -g_dPrec;
+        if(bReverse) cDir = cOrig - cPt;
+        else cDir = cPt - cOrig;
         dNorm = GetNorm(cDir);
-        bArc = (dNorm > g_dPrec + cRad.x/2);
-        if(bArc)
-        {
-            cCloseNorm = cDir/d1;
-            cClosePt = cRad.x*cCloseNorm;
-            dMin = GetDist(cClosePt, cRefPt);
-            dRes = dNorm - cRad.x;
-            bIsNearCenter = false;
-
-            cPt3 = -cRad.x*cCloseNorm;
-            d1 = GetDist(cPt3, cRefPt);
-            if(d1 < dMin)
-            {
-                dMin = d1;
-                cCloseNorm = -1.0*cDir/d1;
-                cClosePt = cPt3;
-            }
-            pPtX->dRef = atan2(cCloseNorm.y, cCloseNorm.x);
-        }
+        if(dNorm > g_dPrec) cCloseNorm = cDir/dNorm;
         else
         {
-            dMin = dNorm;
-            dRes = dNorm;
-            cCloseNorm = 0;
-            cClosePt = 0;
+            cCloseNorm.x = 1.0;
+            cCloseNorm.y = 0.0;
         }
+        cClosePt = cRad.x*cCloseNorm;
+        dMin = GetDist(cClosePt, cRefPt - cOrig);
+        dRes = dNorm - fabs(cRad.x);
+        bIsNearCenter = false;
+
+        if(bCenters)
+        {
+            d1 = GetDist(cOrig, cRefPt);
+            if(d1 < dMin)
+            {
+                bIsNearCenter = true;
+                dMin = d1;
+                dRes = dNorm;
+                cCloseNorm = 0;
+                cClosePt = 0;
+            }
+        }
+        if(bReverse) dRes *= -1.0;
     }
     else
     {
@@ -807,61 +905,114 @@ double GetArcElpsDistFromPt(CDPoint cPt, CDPoint cRefPt, PDPointList pCache, PDL
         int iCents = GetArcElpsProjCenter(cSol, cPt1, iCenters);
         if(iCents < 2) return 0.0;
 
-        dRad = GetCenterAndRad(iCenters[0], cRad, cSol, &cCenter);
-        cDir = cPt1 - cCenter;
-        dNorm = GetNorm(cDir);
-        bArc = (dNorm > g_dPrec + dRad/2);
+        bool bInBounds[4];
+        double dt;
 
-        if(bArc)
+        if(iSrchMask & 2)
         {
-            cCloseNorm = cDir/dNorm;
-            cClosePt = cCenter + dRad*cCloseNorm;
+            dRad = GetCenterAndRad(iCenters[1], cRad, cSol, &cCenter);
+            if(iCents > 2) cDir = cPt1 - cCenter;
+            else cDir = cCenter - cPt1;
+            dNorm = GetArcElpsNorm(iCenters[1], cDir, &cNorm);
+            cPt3 = cCenter + dRad*cNorm;
+            cCloseNorm = cNorm;
+            cClosePt = cPt3;
+            if(iCents > 2) dRes = dNorm - dRad;
+            else dRes = -(dNorm + dRad);
+
+            pPtX->dRef = atan2(cCloseNorm.y, cCloseNorm.x);
+
+            cPt1 = cClosePt;
+            cPt2 = cCloseNorm;
+            cClosePt = cOrig + Rotate(cPt1, cMainDir, true);
+            cCloseNorm = Rotate(cPt2, cMainDir, true);
+
+            pPtX->bIsSet = true;
+            pPtX->cOrigin = cClosePt;
+            pPtX->cDirection = cCloseNorm;
+
+            return dRes;
+        }
+
+        int iCentStart = 0;
+        bool bFirstSet = false;
+
+        if(bCenters)
+        {
+            bIsNearCenter = true;
+
+            cCloseNorm = 0;
+            GetCenterAndRad(0, cRad, cSol, &cCenter);
+            cClosePt = cCenter;
             dMin = GetDist(cPt2, cClosePt);
-            dRes = dNorm - dRad;
-            bIsNearCenter = false;
+            dRes = GetDist(cPt1, cClosePt);
+
+            for(int i = 1; i < 4; i++)
+            {
+                GetCenterAndRad(i, cRad, cSol, &cCenter);
+                d1 = GetDist(cPt2, cCenter);
+                if(d1 < dMin)
+                {
+                    cClosePt = cCenter;
+                    dMin = d1;
+                    dRes = GetDist(cPt1, cClosePt);
+                }
+            }
         }
         else
         {
-            cCloseNorm = 0;
-            cClosePt = cCenter;
-            dMin = GetDist(cPt2, cClosePt);
-            dRes = dNorm;
-            bIsNearCenter = true;
+            bIsNearCenter = false;
+            iCentStart = 1;
+
+            dRad = GetCenterAndRad(iCenters[0], cRad, cSol, &cCenter);
+            cDir = cPt1 - cCenter;
+            dNorm = GetArcElpsNorm(iCenters[0], cDir, &cNorm);
+            cPt3 = cCenter + dRad*cNorm;
+            dMin = GetDist(cPt2, cPt3);
+            cCloseNorm = cNorm;
+            cClosePt = cPt3;
+            dRes = dNorm - dRad;
+
+            if(pBounds && pBounds[0].bIsSet && pBounds[1].bIsSet)
+            {
+                dt = atan2(cNorm.y, cNorm.x);
+                bInBounds[0] = (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dt) > 0);
+            }
+            else bInBounds[0] = true;
+            bFirstSet = bInBounds[0];
         }
 
-        for(int i = 1; i < iCents; i++)
+        bool bIsBetter;
+
+        for(int i = iCentStart; i < iCents; i++)
         {
             dRad = GetCenterAndRad(iCenters[i], cRad, cSol, &cCenter);
-            if((iCents > 2) && (i < 2)) cDir = cPt1 - cCenter;
-            else cDir = cCenter - cPt1;
-            dNorm = GetNorm(cDir);
-            bArc = (dNorm > g_dPrec + dRad/2);
-            if(bArc)
+            bReverse = ((iCents < 3) && (i > 0)) || ((iCents > 2) && (i > 1));
+            if(bReverse) cDir = cCenter - cPt1;
+            else cDir = cPt1 - cCenter;
+            dNorm = GetArcElpsNorm(iCenters[i], cDir, &cNorm);
+            cPt3 = cCenter + dRad*cNorm;
+            d1 = GetDist(cPt2, cPt3);
+
+            if(pBounds && pBounds[0].bIsSet && pBounds[1].bIsSet)
             {
-                cNorm = cDir/dNorm;
-                cPt3 = cCenter + dRad*cNorm;
-                d1 = GetDist(cPt2, cPt3);
-                if(d1 < dMin)
-                {
-                    cCloseNorm = cNorm;
-                    cClosePt = cPt3;
-                    dMin = d1;
-                    dRes = dNorm - dRad;
-                    bIsNearCenter = false;
-                }
+                dt = atan2(cNorm.y, cNorm.x);
+                bInBounds[i] = (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dt) > 0);
             }
-            else
+            else bInBounds[i] = true;
+
+            bIsBetter = ((d1 < dMin - g_dPrec) && !(bFirstSet && !bInBounds[i])) || (!bFirstSet && bInBounds[i]);
+
+            if(bIsBetter)
             {
-                cPt3 = cCenter;
-                d1 = GetDist(cPt2, cPt3);
-                if(d1 < dMin)
-                {
-                    cCloseNorm = 0;
-                    cClosePt = cPt3;
-                    dMin = d1;
-                    dRes = dNorm;
-                    bIsNearCenter = true;
-                }
+                cCloseNorm = cNorm;
+                cClosePt = cPt3;
+                dMin = d1;
+                bFirstSet = bInBounds[i];
+
+                if(bReverse) dRes = -(dNorm + dRad);
+                else dRes = dNorm - dRad;
+                bIsNearCenter = false;
             }
         }
     }
@@ -964,10 +1115,14 @@ double GetArcElpsRadiusAtPt(CDPoint cPt, PDPointList pCache, PDLine pPtR, bool b
     pPtR->cDirection = 0;
 
     PDPointList pLocCache = pCache;
+    CDLine cLn;
+    cLn.bIsSet = false;
+    cLn.cOrigin = cPt;
+    cLn.cDirection.x = 0.0;
     if(bNewPt)
     {
         pLocCache = new CDPointList();
-        BuildArcElpsCache(&cPt, 1, pPoints, pLocCache, pLines, NULL);
+        BuildArcElpsCache(cLn, 1, pPoints, pLocCache, pLines, NULL);
     }
 
     int iCnt = pLocCache->GetCount(0);
@@ -997,7 +1152,7 @@ double GetArcElpsRadiusAtPt(CDPoint cPt, PDPointList pCache, PDLine pPtR, bool b
         cDir = cPt - cOrig;
         dNorm = GetNorm(cDir);
         if(dNorm > g_dPrec) pPtR->cDirection = cDir/dNorm;
-        dRes = cRad.x;
+        dRes = fabs(cRad.x);
     }
     else
     {
@@ -1013,7 +1168,7 @@ double GetArcElpsRadiusAtPt(CDPoint cPt, PDPointList pCache, PDLine pPtR, bool b
         if(iCnts < 2) return dRes;
 
         CDPoint cCenter;
-        dRes = GetCenterAndRad(iCenters[0], cRad, cSol, &cCenter);
+        dRes = fabs(GetCenterAndRad(iCenters[0], cRad, cSol, &cCenter));
         cDir = cPt1 - cCenter;
         dNorm = GetNorm(cDir);
 
@@ -1043,9 +1198,11 @@ bool GetArcElpsPointRefDist(double dRef, PDPointList pCache, double *pdDist)
         cRad.y += dOff;
     }
 
+    double rx = fabs(cRad.x);
+
     if(iCnt < 3)
     {
-        *pdDist = dRef*cRad.x;
+        *pdDist = dRef*rx;
         return true;
     }
 
@@ -1054,6 +1211,8 @@ bool GetArcElpsPointRefDist(double dRef, PDPointList pCache, double *pdDist)
     //CDPoint cMainDir = pCache->GetPoint(2, 0).cPoint;
     CDPoint cSol = pCache->GetPoint(3, 0).cPoint;
     //CDPoint cInter = pCache->GetPoint(4, 0).cPoint;
+
+    double ry = fabs(cRad.y);
 
     double dAng = atan2(cSol.y, cSol.x);
     double dDir = 1.0;
@@ -1065,20 +1224,20 @@ bool GetArcElpsPointRefDist(double dRef, PDPointList pCache, double *pdDist)
 
     if(dRef < dAng)
     {
-        *pdDist = dDir*dRef*cRad.x;
+        *pdDist = dDir*dRef*rx;
         return true;
     }
 
-    double dRes = dAng*cRad.x;
+    double dRes = dAng*rx;
 
     if(dRef < M_PI - dAng)
     {
-        *pdDist = dDir*(dRes + (dRef - dAng)*cRad.y);
+        *pdDist = dDir*(dRes + (dRef - dAng)*ry);
         return true;
     }
 
-    dRes += (M_PI - 2*dAng)*cRad.y;
-    *pdDist = dDir*(dRes + (dRef + dAng - M_PI)*cRad.x);
+    dRes += (M_PI - 2*dAng)*ry;
+    *pdDist = dDir*(dRes + (dRef + dAng - M_PI)*rx);
     return true;
 }
 
@@ -1086,7 +1245,10 @@ double GetArcElpsRefAtDist(double dDist, CDPoint cRad, double dAng)
 {
     if(fabs(dDist) < g_dPrec) return 0.0;
 
-    double dTot = 2.0*dAng*cRad.x + (M_PI - 2.0*dAng)*cRad.y;
+    double rx = fabs(cRad.x);
+    double ry = fabs(cRad.y);
+
+    double dTot = 2.0*dAng*rx + (M_PI - 2.0*dAng)*ry;
     double dOffs = 0.0;
     if(dDist > dTot)
     {
@@ -1106,26 +1268,26 @@ double GetArcElpsRefAtDist(double dDist, CDPoint cRad, double dAng)
         dDist *= dDir;
     }
 
-    double d1 = cRad.x*dAng;
+    double d1 = rx*dAng;
     if(d1 > dDist - g_dPrec)
     {
-        if(d1 > dDist + g_dPrec) return dDir*dDist/cRad.x + dOffs;
+        if(d1 > dDist + g_dPrec) return dDir*dDist/rx + dOffs;
         return dDir*dAng + dOffs;
     }
 
     dDist -= d1;
 
-    d1 = (M_PI - 2.0*dAng)*cRad.y;
+    d1 = (M_PI - 2.0*dAng)*ry;
 
     if(d1 > dDist - g_dPrec)
     {
-        if(d1 > dDist + g_dPrec) return dDir*(dAng + dDist/cRad.y) + dOffs;
+        if(d1 > dDist + g_dPrec) return dDir*(dAng + dDist/ry) + dOffs;
         return dDir*(M_PI - dAng) + dOffs;
     }
 
     dDist -= d1;
-    d1 = cRad.x*dAng;
-    return dDir*(M_PI - dAng + dDist/cRad.x) + dOffs;
+    //d1 = rx*dAng;
+    return dDir*(M_PI - dAng + dDist/rx) + dOffs;
 }
 
 void AddArcElpsSegment(double d1, double d2, PDPointList pCache, PDPrimObject pPrimList, PDRect pRect)
@@ -1149,21 +1311,24 @@ void AddArcElpsSegment(double d1, double d2, PDPointList pCache, PDPrimObject pP
 
     if(iCnt < 3)
     {
+        double dr = fabs(cRad.x);
+        if(dr < g_dPrec) return;
+
         if(d1 > d2)
         {
-            dAng1 = d1/cRad.x;
-            dAng2 = d2/cRad.x;
+            dAng1 = d1/dr;
+            dAng2 = d2/dr;
         }
         else
         {
-            dAng1 = d2/cRad.x;
-            dAng2 = d1/cRad.x;
+            dAng1 = d2/dr;
+            dAng2 = d1/dr;
         }
 
         cPrim.iType = 2;
         cPrim.cPt1 = cOrig;
-        cPrim.cPt2.x = cOrig.x + cRad.x;
-        cPrim.cPt2.y = cOrig.y + cRad.x;
+        cPrim.cPt2.x = cOrig.x + dr;
+        cPrim.cPt2.y = cOrig.y + dr;
         cPrim.cPt3.x = cOrig.x + cRad.x*cos(dAng1);
         cPrim.cPt3.y = cOrig.y + cRad.x*sin(dAng1);
         cPrim.cPt4.x = cOrig.x + cRad.x*cos(dAng2);
@@ -1180,7 +1345,7 @@ void AddArcElpsSegment(double d1, double d2, PDPointList pCache, PDPrimObject pP
     double dAng = atan2(cSol.y, cSol.x);
     double da1 = GetArcElpsRefAtDist(d1, cRad, dAng);
     double da2 = GetArcElpsRefAtDist(d2, cRad, dAng);
-    AddArcPrimitiveWithBounds(cRad, cOrig, cMainDir, cSol, pRect, pPrimList, da1, da2);
+    AddArcPrimitiveWithBounds(cRad, cOrig, cMainDir, cSol, pRect, pPrimList, da1, da2, false);
 }
 
 bool GetArcElpsRefPoint(double dRef, PDPointList pCache, PDPoint pPt)
@@ -1245,7 +1410,7 @@ bool GetArcElpsRefDir(double dRef, PDPointList pCache, PDPoint pPt)
     if(iCnt < 2) return false;
 
     //CDPoint cOrig = pCache->GetPoint(0, 0).cPoint;
-    //CDPoint cRad = pCache->GetPoint(1, 0).cPoint;
+    CDPoint cRad = pCache->GetPoint(1, 0).cPoint;
     CDPoint cPt1;
 
     cPt1.x = -sin(dRef);
@@ -1253,7 +1418,8 @@ bool GetArcElpsRefDir(double dRef, PDPointList pCache, PDPoint pPt)
 
     if(iCnt < 3)
     {
-        *pPt = cPt1;
+        if(cRad.x < -g_dPrec) *pPt = -1.0*cPt1;
+        else *pPt = cPt1;
         return true;
     }
 
@@ -1285,8 +1451,9 @@ bool GetArcElpsReference(double dDist, PDPointList pCache, double *pdRef)
 
     if(iCnt < 3)
     {
-        if(cRad.x < g_dPrec) return false;
-        *pdRef = dDist/cRad.x;
+        double dr = fabs(cRad.x);
+        if(dr < g_dPrec) return false;
+        *pdRef = dDist/dr;
         return true;
     }
 
@@ -1299,5 +1466,343 @@ bool GetArcElpsReference(double dDist, PDPointList pCache, double *pdRef)
     double dAng = atan2(cSol.y, cSol.x);
     *pdRef = GetArcElpsRefAtDist(dDist, cRad, dAng);
     return true;
+}
+
+int GetArcElpsNumParts(PDPointList pCache, PDRefPoint pBounds)
+{
+    int iCnt = pCache->GetCount(0);
+    if(iCnt < 5) return 0;
+
+    //CDPoint cOrig = pCache->GetPoint(0, 0).cPoint;
+    CDPoint cRad = pCache->GetPoint(1, 0).cPoint;
+
+    int nOffs = pCache->GetCount(2);
+    if(nOffs > 0)
+    {
+        double dOff = pCache->GetPoint(0, 2).cPoint.x;
+        cRad.x += dOff;
+        cRad.y += dOff;
+    }
+
+    if((cRad.x > g_dPrec) && (cRad.y > g_dPrec)) return 0;
+    if((cRad.x < -g_dPrec) && (cRad.y < -g_dPrec)) return 0;
+
+    //CDPoint cMainDir = pCache->GetPoint(2, 0).cPoint;
+    CDPoint cSol = pCache->GetPoint(3, 0).cPoint;
+    //CDPoint cInter = pCache->GetPoint(4, 0).cPoint;
+    double dAng = atan2(cSol.y, cSol.x);
+    int iRes = 0;
+    int iRef;
+
+    if(cRad.y < g_dPrec)
+    {
+        if(!pBounds[0].bIsSet) return 1;
+        if(!pBounds[1].bIsSet)
+        {
+            iRef = RefInBounds(-dAng, dAng, pBounds[0].dRef);
+            if(iRef > 2) return 2;
+            if(iRef > 0) return 1;
+            iRef = RefInBounds(M_PI - dAng, dAng - M_PI, pBounds[0].dRef);
+            if(iRef > 2) return 2;
+            if(iRef > 0) return 1;
+            return 0;
+        }
+
+        if((RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng) > 2) || (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, M_PI - dAng) > 2)) iRes++;
+        if((RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng - M_PI) > 2) || (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, -dAng) > 2)) iRes++;
+
+        return iRes;
+    }
+
+    if(cRad.x < -g_dPrec)
+    {
+        if(!pBounds[0].bIsSet) return 3;
+        if(!pBounds[1].bIsSet)
+        {
+            iRef = RefInBounds(-dAng, dAng, pBounds[0].dRef);
+            if(iRef > 2) return 4;
+            if(iRef > 0) return 3;
+            iRef = RefInBounds(dAng, M_PI - dAng, pBounds[0].dRef);
+            if(iRef > 2) return 4;
+            if(iRef > 0) return 3;
+            iRef = RefInBounds(M_PI - dAng, dAng - M_PI, pBounds[0].dRef);
+            if(iRef > 2) return 4;
+            if(iRef > 0) return 3;
+            iRef = RefInBounds(dAng - M_PI, -dAng, pBounds[0].dRef);
+            if(iRef > 2) return 4;
+            if(iRef > 0) return 3;
+            return 0;
+        }
+
+        if(RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng) > 2) iRes++;
+        if(RefInBounds(pBounds[0].dRef, pBounds[1].dRef, -dAng) > 2) iRes++;
+        if(RefInBounds(pBounds[0].dRef, pBounds[1].dRef, M_PI - dAng) > 2) iRes++;
+        if(RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng - M_PI) > 2) iRes++;
+
+        return iRes;
+    }
+
+    if(cRad.x < g_dPrec)
+    {
+        if(!pBounds[0].bIsSet) return 1;
+        if(!pBounds[1].bIsSet)
+        {
+            iRef = RefInBounds(dAng, M_PI - dAng, pBounds[0].dRef);
+            if(iRef > 2) return 2;
+            if(iRef > 0) return 1;
+            iRef = RefInBounds(dAng - M_PI, -dAng, pBounds[0].dRef);
+            if(iRef > 2) return 2;
+            if(iRef > 0) return 1;
+            return 0;
+        }
+
+        if((RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng) > 2) || (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, -dAng) > 2)) iRes++;
+        if((RefInBounds(pBounds[0].dRef, pBounds[1].dRef, dAng - M_PI) > 2) || (RefInBounds(pBounds[0].dRef, pBounds[1].dRef, M_PI - dAng) > 2)) iRes++;
+
+        return iRes;
+    }
+
+    return 0;
+}
+
+bool ArcElpsRemovePart(bool bDown, PDPointList pCache, PDRefPoint pBounds)
+{
+    int iCnt = pCache->GetCount(0);
+    if(iCnt < 5) return false;
+
+    //CDPoint cOrig = pCache->GetPoint(0, 0).cPoint;
+    CDPoint cRad = pCache->GetPoint(1, 0).cPoint;
+
+    int nOffs = pCache->GetCount(2);
+    if(nOffs > 0)
+    {
+        double dOff = pCache->GetPoint(0, 2).cPoint.x;
+        cRad.x += dOff;
+        cRad.y += dOff;
+    }
+
+    //CDPoint cMainDir = pCache->GetPoint(2, 0).cPoint;
+    CDPoint cSol = pCache->GetPoint(3, 0).cPoint;
+    //CDPoint cInter = pCache->GetPoint(4, 0).cPoint;
+    double dAng = atan2(cSol.y, cSol.x);
+
+    if(cRad.y < g_dPrec)
+    {
+        if(!pBounds[0].bIsSet)
+        {
+            if(bDown)
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = -dAng;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = dAng;
+            }
+            else
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = M_PI - dAng;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = dAng - M_PI;
+            }
+            return true;
+        }
+
+        double dTestVal = pBounds[0].dRef;
+        if(pBounds[1].bIsSet) dTestVal = pBounds[1].dRef;
+
+        int iEnd = -1;
+        int iRef = RefInBounds(-dAng, dAng, dTestVal);
+        if(iRef > 0) iEnd = 2;
+
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng, M_PI - dAng, dTestVal);
+            if(iRef > 0) iEnd = 2;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(M_PI - dAng, dAng - M_PI, dTestVal);
+            if(iRef > 0) iEnd = 0;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng - M_PI, -dAng, dTestVal);
+            if(iRef > 0) iEnd = 0;
+        }
+        if(iEnd < 0) return false;
+
+        if(!pBounds[1].bIsSet)
+        {
+            pBounds[1].bIsSet = true;
+            if(bDown) pBounds[1].dRef = pBounds[0].dRef;
+        }
+
+        double *pdVal = &pBounds[1].dRef;
+        if(bDown) pdVal = &pBounds[0].dRef;
+        
+        switch(iEnd)
+        {
+        case 0:
+            *pdVal = dAng;
+            break;
+        case 2:
+            *pdVal = dAng - M_PI;
+            break;
+        }
+
+        if((RefInBounds(dAng, M_PI - dAng, pBounds[0].dRef) > 0) && (RefInBounds(dAng, M_PI - dAng, pBounds[1].dRef) > 0)) return false;
+        if((RefInBounds(dAng - M_PI, -dAng, pBounds[0].dRef) > 0) && (RefInBounds(dAng - M_PI, -dAng, pBounds[1].dRef) > 0)) return false;
+
+        return true;
+    }
+
+    if(cRad.x < -g_dPrec)
+    {
+        if(!pBounds[0].bIsSet)
+        {
+            if(bDown)
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = -dAng;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = dAng;
+            }
+            else
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = dAng;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = -dAng;
+            }
+            return true;
+        }
+
+        double dTestVal = pBounds[0].dRef;
+        if(pBounds[1].bIsSet) dTestVal = pBounds[1].dRef;
+
+        int iEnd = -1;
+        int iRef = RefInBounds(-dAng, dAng, dTestVal);
+        if(iRef > 1) iEnd = 3;
+        else if(iRef > 0) iEnd = 2;
+
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng, M_PI - dAng, dTestVal);
+            if(iRef > 1) iEnd = 0;
+            else if(iRef > 0) iEnd = 3;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(M_PI - dAng, dAng - M_PI, dTestVal);
+            if(iRef > 1) iEnd = 1;
+            else if(iRef > 0) iEnd = 0;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng - M_PI, -dAng, dTestVal);
+            if(iRef > 1) iEnd = 2;
+            else if(iRef > 0) iEnd = 1;
+        }
+        if(iEnd < 0) return false;
+
+        if(!pBounds[1].bIsSet)
+        {
+            pBounds[1].bIsSet = true;
+            if(bDown) pBounds[1].dRef = pBounds[0].dRef;
+        }
+
+        double *pdVal = &pBounds[1].dRef;
+        if(bDown) pdVal = &pBounds[0].dRef;
+        
+        switch(iEnd)
+        {
+        case 0:
+            *pdVal = dAng;
+            break;
+        case 1:
+            *pdVal = M_PI - dAng;
+            break;
+        case 2:
+            *pdVal = dAng - M_PI;
+            break;
+        case 3:
+            *pdVal = -dAng;
+            break;
+        }
+
+        return true;
+    }
+
+    if(cRad.x < g_dPrec)
+    {
+        if(!pBounds[0].bIsSet)
+        {
+            if(bDown)
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = dAng - M_PI;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = -dAng;
+            }
+            else
+            {
+                pBounds[0].bIsSet = true;
+                pBounds[0].dRef = dAng;
+                pBounds[1].bIsSet = true;
+                pBounds[1].dRef = M_PI - dAng;
+            }
+            return true;
+        }
+
+        double dTestVal = pBounds[0].dRef;
+        if(pBounds[1].bIsSet) dTestVal = pBounds[1].dRef;
+
+        int iEnd = -1;
+        int iRef = RefInBounds(-dAng, dAng, dTestVal);
+        if(iRef > 0) iEnd = 3;
+
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng, M_PI - dAng, dTestVal);
+            if(iRef > 0) iEnd = 3;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(M_PI - dAng, dAng - M_PI, dTestVal);
+            if(iRef > 0) iEnd = 1;
+        }
+        if(iEnd < 0)
+        {
+            iRef = RefInBounds(dAng - M_PI, -dAng, dTestVal);
+            if(iRef > 0) iEnd = 1;
+        }
+        if(iEnd < 0) return false;
+
+        if(!pBounds[1].bIsSet)
+        {
+            pBounds[1].bIsSet = true;
+            if(bDown) pBounds[1].dRef = pBounds[0].dRef;
+        }
+
+        double *pdVal = &pBounds[1].dRef;
+        if(bDown) pdVal = &pBounds[0].dRef;
+        
+        switch(iEnd)
+        {
+        case 1:
+            *pdVal = M_PI - dAng;
+            break;
+        case 3:
+            *pdVal = -dAng;
+            break;
+        }
+
+        if((RefInBounds(-dAng, dAng, pBounds[0].dRef) > 0) && (RefInBounds(-dAng, dAng, pBounds[1].dRef) > 0)) return false;
+        if((RefInBounds(M_PI - dAng, dAng - M_PI, pBounds[0].dRef) > 0) && (RefInBounds(M_PI - dAng, dAng - M_PI, pBounds[1].dRef) > 0)) return false;
+
+        return true;
+    }
+
+    return false;
 }
 

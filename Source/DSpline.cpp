@@ -14,11 +14,11 @@ extern HWND g_hStatus;*/
 
 bool AddSplinePoint(double x, double y, char iCtrl, PDPointList pPoints)
 {
-    if(iCtrl == 2)
+    if(iCtrl > 1)
     {
         int nOffs = pPoints->GetCount(2);
-        if(nOffs > 0) pPoints->SetPoint(0, 2, x, y, iCtrl);
-        else pPoints->AddPoint(x, y, iCtrl);
+        if(nOffs > 0) pPoints->SetPoint(0, 2, x, y, 2);
+        else pPoints->AddPoint(x, y, 2);
         return true;
     }
 
@@ -172,7 +172,7 @@ double AddOffset(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList pCa
     return dRes;
 }
 
-bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
+bool BuildSplineCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
     double *pdDist)
 {
     pCache->ClearAll();
@@ -206,8 +206,8 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 		    cInPt = pPoints->GetPoint(1, 0);
 		    pCache->AddPoint(cInPt.cPoint.x, cInPt.cPoint.y, 0);
 		}
-		if(iMode == 1) pCache->AddPoint(pTmpPt->x, pTmpPt->y, 0);
-		*pdDist = AddOffset(pTmpPt, iMode, pPoints, pCache);
+		if(iMode == 1) pCache->AddPoint(cTmpPt.cOrigin.x, cTmpPt.cOrigin.y, 0);
+		*pdDist = AddOffset(&cTmpPt.cOrigin, iMode, pPoints, pCache);
 		return true;
 	}
 
@@ -235,14 +235,14 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 		    cPt1 = cInPt.cPoint;
 		    cInPt = pPoints->GetPoint(1, 0);
 		    cPt2 = cInPt.cPoint;
-		    cPt3 = *pTmpPt;
+		    cPt3 = cTmpPt.cOrigin;
 			CDPoint cControl = GetThreePointsControl(cPt1, cPt2, cPt3);
 			pCache->AddPoint(cControl.x, cControl.y, 0);
 		}
 
         if(iMode == 1)
         {
-		    pCache->AddPoint(pTmpPt->x, pTmpPt->y, 0);
+		    pCache->AddPoint(cTmpPt.cOrigin.x, cTmpPt.cOrigin.y, 0);
         }
 		else if(nNorm > 1)
 		{
@@ -250,7 +250,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 		    pCache->AddPoint(cInPt.cPoint.x, cInPt.cPoint.y, 0);
 		}
 
-		*pdDist = AddOffset(pTmpPt, iMode, pPoints, pCache);
+		*pdDist = AddOffset(&cTmpPt.cOrigin, iMode, pPoints, pCache);
 		return true;
 	}
 
@@ -264,7 +264,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 	if(bClosed)
 	{
 	    cPt1 = pPoints->GetPoint(0, 0).cPoint;
-        if(iMode == 1) cPt2 = *pTmpPt;
+        if(iMode == 1) cPt2 = cTmpPt.cOrigin;
         else cPt2 = pPoints->GetPoint(nNorm - 1, 0).cPoint;
 		dl1 = GetDist(cPt1, cPt2);
 	    cPt2 = pPoints->GetPoint(1, 0).cPoint;
@@ -279,7 +279,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 			dt[i] = dl1/(dl1 + dl2);
 		}
         cPt1 = cPt2;
-        if(iMode == 1) cPt2 = *pTmpPt;
+        if(iMode == 1) cPt2 = cTmpPt.cOrigin;
         else cPt2 = pPoints->GetPoint(nNorm - 1, 0).cPoint;
         dl1 = dl2;
 		dl2 = GetDist(cPt1, cPt2);
@@ -309,7 +309,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 		}
 		dl1 = dl2;
         cPt1 = cPt2;
-        if(iMode == 1) cPt2 = *pTmpPt;
+        if(iMode == 1) cPt2 = cTmpPt.cOrigin;
         else cPt2 = pPoints->GetPoint(iDim + 1, 0).cPoint;
 		dl2 = GetDist(cPt1, cPt2);
 		dt[iDim - 1] = dl1/(dl1 + 2.0*dl2);
@@ -346,7 +346,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 			dy[i] = (cPt1.y - pdDiag2[i - 1]*dy[i - 1])/pdDiag[i];
 		}
 
-        if(iMode == 1) cPt1 = *pTmpPt;
+        if(iMode == 1) cPt1 = cTmpPt.cOrigin;
         else cPt1 = pPoints->GetPoint(nNorm - 1, 0).cPoint;
 		dx[iDim - 1] = cPt1.x - pdDiag2[iDim - 2]*dx[iDim - 2];
 		dy[iDim - 1] = cPt1.y - pdDiag2[iDim - 2]*dy[iDim - 2];
@@ -391,7 +391,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 			dy[i] = (cPt1.y - pdDiag2[i - 1]*dy[i - 1])/pdDiag[i];
 		}
         cPt1 = pPoints->GetPoint(iDim, 0).cPoint;
-        if(iMode == 1) cPt2 = *pTmpPt;
+        if(iMode == 1) cPt2 = cTmpPt.cOrigin;
         else cPt2 = pPoints->GetPoint(iDim + 1, 0).cPoint;
 		dx[iDim - 1] = ((cPt1.x - cPt2.x*dt[n - 3]*dt[n - 3]) -
 			pdDiag2[iDim - 2]*dx[iDim - 2])/pdDiag[iDim - 1];
@@ -413,7 +413,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 		{
             pCache->AddPoint(dx2[i], dy2[i], 0);
 		}
-		if(iMode == 1) cPt1 = *pTmpPt;
+		if(iMode == 1) cPt1 = cTmpPt.cOrigin;
         else cPt1 = pPoints->GetPoint(nNorm - 1, 0).cPoint;
         pCache->AddPoint(cPt1.x, cPt1.y, 0);
 	}
@@ -427,7 +427,7 @@ bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointLis
 	free(dy);
 	free(dx);
 
-	*pdDist = AddOffset(pTmpPt, iMode, pPoints, pCache);
+	*pdDist = AddOffset(&cTmpPt.cOrigin, iMode, pPoints, pCache);
     return true;
 }
 
@@ -463,14 +463,14 @@ int CropQuad(CDPrimitive cQuad, double dr, PDRect pRect, PDPrimObject pPrimList)
     cPrim.cPt1 = GetQuadPoint(&cQuad, 0.0) + dr*cDir1;
     cDir2 = GetQuadNormal(&cQuad, 0.5);
     cPrim.cPt3 = GetQuadPoint(&cQuad, 0.5) + dr*cDir2;
-    LineXLine(false, cPrim.cPt1, GetNormal(cDir1), cPrim.cPt3, GetNormal(cDir2), &cPrim.cPt2);
+    LineXLine(cPrim.cPt1, GetNormal(cDir1), cPrim.cPt3, GetNormal(cDir2), &cPrim.cPt2);
     int k1 = CropPrimitive(cPrim, pRect, pPrimList);
 
     cDir1 = cDir2;
     cPrim.cPt1 = cPrim.cPt3;
     cDir2 = GetQuadNormal(&cQuad, 1.0);
     cPrim.cPt3 = GetQuadPoint(&cQuad, 1.0) + dr*cDir2;
-    LineXLine(false, cPrim.cPt1, GetNormal(cDir1), cPrim.cPt3, GetNormal(cDir2), &cPrim.cPt2);
+    LineXLine(cPrim.cPt1, GetNormal(cDir1), cPrim.cPt3, GetNormal(cDir2), &cPrim.cPt2);
     int k2 = CropPrimitive(cPrim, pRect, pPrimList);
 
     int iRes = k1;
@@ -531,7 +531,7 @@ double GetQuadBufLength(CDPrimitive cQuad, double dr, double dt1, double dt2)
         cDir2 = GetQuadNormal(&cQuad, dt);
         cQuad1.cPt3 = GetQuadPoint(&cQuad, dt) + dr*cDir2;
 
-        LineXLine(false, cQuad1.cPt1, GetNormal(cDir1), cQuad1.cPt3, GetNormal(cDir2), &cQuad1.cPt2);
+        LineXLine(cQuad1.cPt1, GetNormal(cDir1), cQuad1.cPt3, GetNormal(cDir2), &cQuad1.cPt2);
         dRes += GetQuadLength(&cQuad1, 0.0, 1.0);
     }
     return dRes;
@@ -856,9 +856,9 @@ double GetQuadBufPointAtDist(CDPrimitive cQuad, double dr, double t1, double dDi
         cDir2 = GetQuadNormal(&cQuad, dt);
         cQuad1.cPt3 = GetQuadPoint(&cQuad, dt) + dr*cDir2;
 
-        LineXLine(false, cQuad1.cPt1, GetNormal(cDir1), cQuad1.cPt3, GetNormal(cDir2), &cQuad1.cPt2);
+        LineXLine(cQuad1.cPt1, GetNormal(cDir1), cQuad1.cPt3, GetNormal(cDir2), &cQuad1.cPt2);
         d1 = GetQuadLength(&cQuad1, 0.0, 1.0);
-        if(d1 < dDist) dDist -= d1;
+        if(d1 < dDist - g_dPrec) dDist -= d1;
         else bFound = true;
     }
 
@@ -1167,11 +1167,11 @@ int AddSplineSegmentQuadsWithBounds(double dT1, double dT2, PDPointList pCache,
     return iRes;
 }
 
-int BuildSplinePrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildSplinePrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDRefPoint pBounds, double dOffset,
     double *pdDist, PDPoint pDrawBnds, bool bQuadsOnly)
 {
-    if(pTmpPt) BuildSplineCache(pTmpPt, iMode, pPoints, pCache, pdDist);
+    if(iMode > 0) BuildSplineCache(cTmpPt, iMode, pPoints, pCache, pdDist);
 
     int iCnt = pCache->GetCount(0);
     if(iCnt < 2) return 0;
@@ -1614,6 +1614,8 @@ double GetSplineRefAtDist(double dDist, PDPointList pCache)
     int iCnt = pCache->GetCount(0);
     if(iCnt < 2) return -1.0;
 
+    if(dDist < g_dPrec) return 0.0;
+
     int nCtrl = pCache->GetCount(1);
     bool bClosed = (nCtrl > 0);
 
@@ -1702,7 +1704,7 @@ double GetSplineRefAtDist(double dDist, PDPointList pCache)
     if(bFound)
         return (double)iQuads + GetQuadBufPointAtDist(cQuad, dr, 0.0, dDist);
 
-    return (double)(iQuads + 1);
+    return (double)(iQuads + 1.0);
 }
 
 void AddSplineSegment(double d1, double d2, PDPointList pCache, PDPrimObject pPrimList, PDRect pRect)
@@ -1816,3 +1818,4 @@ bool GetSplineReference(double dDist, PDPointList pCache, double *pdRef)
     *pdRef = GetSplineRefAtDist(dDist, pCache);
     return true;
 }
+

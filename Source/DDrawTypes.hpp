@@ -56,6 +56,7 @@ private:
     bool BoundPoint(CDPoint cRefPt, PDLine pPtX, double *pdDist);
     int AddDimenPrimitive(int iPos, PDDimension pDim, PDPrimObject pPrimitive, PDRect pRect);
     void SwapBounds();
+    bool RemovePart(bool bDown, PDRefPoint pBounds);
 public:
     CDObject(int iType, double dWidth);
     ~CDObject();
@@ -64,10 +65,9 @@ public:
     void Undo();
     void Redo();
     // iMode: 0 - normal, 1 - inserting, 2 - buffering, 3 - rounding
-    bool BuildCache(PDPoint pTmpPt, int iMode);
+    bool BuildCache(CDLine cTmpPt, int iMode);
     // returns 0 - not in rect, 1 - partially in rect, 2 - full in rect
-    int BuildPrimitives(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDRect pRect, int iTemp,
-        PDFileAttrs pAttrs);
+    int BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp, PDFileAttrs pAttrs);
     void GetFirstPrimitive(PDPrimitive pPrim, double dScale, int iDimen);
     void GetNextPrimitive(PDPrimitive pPrim, double dScale, int iDimen);
     int GetBSplineParts();
@@ -83,7 +83,7 @@ public:
     bool HasEnoughPoints();
     bool GetPoint(int iIndex, char iCtrl, PDInputPoint pPoint);
     void SetPoint(int iIndex, char iCtrl, CDInputPoint cPoint);
-    double GetDistFromPt(CDPoint cPt, CDPoint cRefPt, PDLine pPtX, int *piDimen);
+    double GetDistFromPt(CDPoint cPt, CDPoint cRefPt, bool bSnapCenters, PDLine pPtX, int *piDimen);
     CDLineStyle GetLineStyle();
     void SetLineStyle(int iMask, CDLineStyle cStyle);
     bool GetRestrictPoint(CDPoint cPt, int iMode, bool bRestrictSet, double dRestrictValue,
@@ -126,6 +126,8 @@ public:
     CDPoint GetPointToDir(CDPoint cPoint, double dAngle, CDPoint cPtTarget);
     void SetAuxInt(int iVal);
     int GetAuxInt();
+    int GetNumParts();
+    CDObject* SplitPart(PDRect pRect, PDPtrList pRegions);
 } *PDObject;
 
 typedef class CDataList
@@ -136,7 +138,7 @@ private:
     PDObject *m_ppObjects;
     CDFileAttrs m_cFileAttrs;
     bool m_bHasChanged;
-    int GetTangSnap(CDPoint cPt, double dDist, PDLine pSnapPt, PDObject pObj, PDObject pDynObj);
+    int GetTangSnap(CDPoint cPt, double dDist, bool bNewPt, PDLine pSnapPt, PDObject pObj, PDObject pDynObj);
 public:
     CDataList();
     ~CDataList();
@@ -185,6 +187,7 @@ public:
         bool bArrows, bool bLabels);
     bool GetSelSnapEnabled();
     void SetSelSnapEnabled(bool bEnable);
+    bool BreakSelObjects(PDRect pRect, PDPtrList pRegions);
 } *PDataList;
 
 #endif

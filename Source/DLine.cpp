@@ -7,7 +7,7 @@
 
 bool AddLinePoint(double x, double y, char iCtrl, PDPointList pPoints)
 {
-    if(iCtrl == 2)
+    if((iCtrl == 2) || (iCtrl == 3))
     {
         if(pPoints->GetCount(-1) != 2) return false;
 
@@ -28,7 +28,7 @@ bool AddLinePoint(double x, double y, char iCtrl, PDPointList pPoints)
 
         CDPoint cPt3 = {x - cOrig.x, y - cOrig.y};
         CDPoint cPt4 = Rotate(cPt3, cDir, false);
-        cPt4.x = 0;
+        cPt4.x = 0.0;
         cPt3 = Rotate(cPt4, cDir, true);
         cPt1 += cPt3;
         cPt2 += cPt3;
@@ -41,20 +41,20 @@ bool AddLinePoint(double x, double y, char iCtrl, PDPointList pPoints)
     return (pPoints->GetCount(-1) == 2);
 }
 
-bool BuildLineCache(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDPointList pPoints,
-    PDPointList pCache, double *pdMovedDist)
+bool BuildLineCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache, double *pdMovedDist)
 {
     pCache->ClearAll();
 
     int iPts = pPoints->GetCount(-1);
     if(iPts < 1) return false;
-    if((iPts < 2) && !pTmpPt) return false;
+    if((iPts < 2) && (iMode != 1)) return false;
 
     CDInputPoint cInPt1 = pPoints->GetPoint(0, -1);
     CDPoint cPt1, cPt2;
-    if(cTmpPt2.bIsSet) cPt1 = cTmpPt2.cOrigin;
+
+    if((iMode == 1) && cTmpPt.bIsSet) cPt1 = cTmpPt.cDirection;
     else cPt1 = cInPt1.cPoint;
-    if(iMode == 1) cPt2 = *pTmpPt;
+    if(iMode == 1) cPt2 = cTmpPt.cOrigin;
     else cPt2 = pPoints->GetPoint(1, -1).cPoint;
 
     CDPoint cOrig = cPt1;
@@ -74,7 +74,7 @@ bool BuildLineCache(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDPointList pPoin
 
     if(iMode == 2)
     {
-        cPt2 = Rotate(*pTmpPt - cOrig, cDir, false);
+        cPt2 = Rotate(cTmpPt.cOrigin - cOrig, cDir, false);
         if(pdMovedDist) *pdMovedDist = fabs(cPt2.y);
         pCache->AddPoint(cPt2.y, 0.0, 2);
     }
@@ -149,11 +149,11 @@ int CropLineByRect(CDPoint cOrig, CDPoint cDir, PDRect pRect, PDPoint pRef)
     return 1;
 }
 
-int BuildLinePrimitives(PDPoint pTmpPt, CDLine cTmpPt2, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildLinePrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDRefPoint pBounds, double dOffset,
     double *pdMovedDist, PDPoint pDrawBnds)
 {
-    if(pTmpPt) BuildLineCache(pTmpPt, cTmpPt2, iMode, pPoints, pCache, pdMovedDist);
+    if(iMode > 0) BuildLineCache(cTmpPt, iMode, pPoints, pCache, pdMovedDist);
 
     int iCnt = pCache->GetCount(0);
 
@@ -245,11 +245,7 @@ double GetLineDistFromPt(CDPoint cPt, PDPointList pCache, PDLine pPtX)
 
     int iCnt = pCache->GetCount(0);
 
-    if(iCnt < 2)
-{
-printf("GetLineDistFromPt\n");
-return 0.0;
-}
+    if(iCnt < 2) return 0.0;
 
     CDPoint cOrig = pCache->GetPoint(0, 0).cPoint;
     CDPoint cNorm = pCache->GetPoint(1, 0).cPoint;
@@ -322,7 +318,8 @@ double GetLineRadiusAtPt(CDPoint cPt, PDPointList pCache, PDLine pPtR, bool bNew
 
     int iCnt = pCache->GetCount(-1);
 
-    if(iCnt < 2) return -1.0;
+    if(iCnt < 1) return -1.0;
+    if(!bNewPt && (iCnt < 2)) return -1.0;
 
     CDPoint cNorm = {0, 0};
     if(bNewPt)
@@ -390,3 +387,4 @@ bool GetLineRefDir(double dRef, PDPointList pCache, PDPoint pPt)
     *pPt = pCache->GetPoint(1, 0).cPoint;
     return true;
 }
+

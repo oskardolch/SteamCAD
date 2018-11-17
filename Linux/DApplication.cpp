@@ -22,8 +22,7 @@ double GetPtDist(GdkPoint *pPt, int x, int y)
 
 gboolean app_delete(GtkWidget *widget, GdkEvent *event, PDApplication pApp)
 {
-	pApp->Terminate();
-	return FALSE;
+    return pApp->Terminate();
 }
 
 gboolean app_configure(GtkWidget *widget, GdkEventConfigure *event, PDApplication pApp)
@@ -106,35 +105,35 @@ CDApplication::CDApplication(const char *psAppPath)
 {
     strcpy(m_sAppPath, psAppPath);
 	
-	m_bSettingProps = false;
+    m_bSettingProps = false;
     m_pStatLab1 = NULL;
 
     m_pSnapEnableMnu = gtk_menu_new();
     m_pSnapDisableMnu = gtk_menu_new();
     GtkWidget *pMnuItem = gtk_menu_item_new_with_label(_("Enable snap"));
-	g_signal_connect(G_OBJECT(pMnuItem), "activate", G_CALLBACK(app_enable_snap_mnu), this);
+    g_signal_connect(G_OBJECT(pMnuItem), "activate", G_CALLBACK(app_enable_snap_mnu), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(m_pSnapEnableMnu), pMnuItem);
     gtk_widget_show(pMnuItem);
 
     pMnuItem = gtk_menu_item_new_with_label(_("Disable snap"));
-	g_signal_connect(G_OBJECT(pMnuItem), "activate", G_CALLBACK(app_disable_snap_mnu), this);
+    g_signal_connect(G_OBJECT(pMnuItem), "activate", G_CALLBACK(app_disable_snap_mnu), this);
     gtk_menu_shell_append(GTK_MENU_SHELL(m_pSnapDisableMnu), pMnuItem);
     gtk_widget_show(pMnuItem);
 
-	/* create a new window */
-	m_pMainWnd = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_size_request(m_pMainWnd, 400, 300);
-	gtk_window_set_title(GTK_WINDOW(m_pMainWnd), "SteamCAD");
-	g_signal_connect(G_OBJECT(m_pMainWnd), "delete-event", G_CALLBACK(app_delete), this);
+    /* create a new window */
+    m_pMainWnd = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_widget_set_size_request(m_pMainWnd, 400, 300);
+    gtk_window_set_title(GTK_WINDOW(m_pMainWnd), "SteamCAD");
+    g_signal_connect(G_OBJECT(m_pMainWnd), "delete-event", G_CALLBACK(app_delete), this);
 
-	/* A vbox to put a menu and a button in: */
-	GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(m_pMainWnd), vbox);
-	gtk_widget_show(vbox);
+    /* A vbox to put a menu and a button in: */
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(m_pMainWnd), vbox);
+    gtk_widget_show(vbox);
 
     GtkAccelGroup *pAccelGroup = InitMenu(vbox, this);
 	
-	gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), pAccelGroup);
+    gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), pAccelGroup);
 
     GtkWidget *draw = gtk_drawing_area_new();
     gtk_box_pack_start(GTK_BOX(vbox), draw, TRUE, TRUE, 0);
@@ -152,7 +151,7 @@ CDApplication::CDApplication(const char *psAppPath)
     GtkWidget *pStatBar = GetStatusBar();
 
     GList *pChilds = gtk_container_get_children(GTK_CONTAINER(pStatBar));
-	GtkWidget *pFrame = (GtkWidget*)g_list_nth(pChilds, 0)->data;
+    GtkWidget *pFrame = (GtkWidget*)g_list_nth(pChilds, 0)->data;
 
     gtk_box_set_child_packing(GTK_BOX(pStatBar), pFrame, FALSE, TRUE, 0, GTK_PACK_START);
     gtk_widget_set_size_request(pFrame, 150, 23);
@@ -282,6 +281,16 @@ CDApplication::CDApplication(const char *psAppPath)
 	
     RestoreSettings();
 
+    m_bSettingProps = true;
+    GtkWidget *menu = GetMenuBar();
+    pChilds = gtk_container_get_children(GTK_CONTAINER(menu));
+    GtkWidget *edit_menu = (GtkWidget*)g_list_nth(pChilds, 2)->data;
+    GtkWidget *edit_top = (GtkWidget*)gtk_menu_item_get_submenu(GTK_MENU_ITEM(edit_menu));
+    pChilds = gtk_container_get_children(GTK_CONTAINER(edit_top));
+    GtkWidget *menu_item = (GtkWidget*)g_list_nth(pChilds, 7)->data;
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), m_bPaperUnits);
+    m_bSettingProps = false;
+
     if(fabs(m_cFSR.dScaleDenom) > g_dPrec)
         m_dDrawScale = m_cFSR.dScaleNomin/m_cFSR.dScaleDenom;
     else m_dDrawScale = 1.0;
@@ -326,263 +335,263 @@ CDApplication::~CDApplication()
 
 GtkWidget* CDApplication::GetMainWindow()
 {
-	return(m_pMainWnd);
+    return(m_pMainWnd);
 }
 
 void od_start_elem(GMarkupParseContext *context, const gchar *element_name,
-	const gchar **attribute_names, const gchar **attribute_values,
-	gpointer user_data, GError **error)
+    const gchar **attribute_names, const gchar **attribute_values,
+    gpointer user_data, GError **error)
 {
-	PDApplication pApp = (PDApplication)user_data;
-	gint left, top, width, height;
-	GdkGravity grav;
+    PDApplication pApp = (PDApplication)user_data;
+    gint left, top, width, height;
+    GdkGravity grav;
     CDFileSetupRec cFSR;
     float f;
     gint i;
 
-	if(g_strcmp0(element_name, "MainForm") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
-		sscanf(attribute_values[2], "%d", &width);
-		sscanf(attribute_values[3], "%d", &height);
-		sscanf(attribute_values[4], "%d", (int*)&grav);
-		pApp->SetPosition(left, top, width, height, grav);
-	}
-	else if(g_strcmp0(element_name, "DrawSettings") == 0)
-	{
-	    sscanf(attribute_values[0], "%d", &left);
-	    sscanf(attribute_values[1], "%d", &top);
-	    pApp->SetDrawSettings(left, top, attribute_values[2]);
+    if(g_strcmp0(element_name, "MainForm") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
+        sscanf(attribute_values[2], "%d", &width);
+        sscanf(attribute_values[3], "%d", &height);
+        sscanf(attribute_values[4], "%d", (int*)&grav);
+        pApp->SetPosition(left, top, width, height, grav);
     }
-	else if(g_strcmp0(element_name, "PageSettings") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &i);
-        cFSR.bPortrait = i;
-		sscanf(attribute_values[1], "%f", &f);
-        cFSR.dScaleNomin = f;
-		sscanf(attribute_values[2], "%f", &f);
-        cFSR.dScaleDenom = f;
-		sscanf(attribute_values[3], "%f", &f);
-        cFSR.dAngGrid = f;
-		sscanf(attribute_values[4], "%f", &f);
-        cFSR.dXGrid = f;
-		sscanf(attribute_values[5], "%f", &f);
-        cFSR.dYGrid = f;
-		sscanf(attribute_values[6], "%f", &f);
-        cFSR.dDefLineWidth = f;
-		pApp->SetPageSettings(&cFSR);
+    else if(g_strcmp0(element_name, "DrawSettings") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
+        pApp->SetDrawSettings(left, top, attribute_values[2]);
     }
-	else if(g_strcmp0(element_name, "PaperSize") == 0)
-	{
+    else if(g_strcmp0(element_name, "PageSettings") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &i);
+            cFSR.bPortrait = i;
+        sscanf(attribute_values[1], "%f", &f);
+            cFSR.dScaleNomin = f;
+        sscanf(attribute_values[2], "%f", &f);
+            cFSR.dScaleDenom = f;
+        sscanf(attribute_values[3], "%f", &f);
+            cFSR.dAngGrid = f;
+        sscanf(attribute_values[4], "%f", &f);
+            cFSR.dXGrid = f;
+        sscanf(attribute_values[5], "%f", &f);
+            cFSR.dYGrid = f;
+        sscanf(attribute_values[6], "%f", &f);
+            cFSR.dDefLineWidth = f;
+        pApp->SetPageSettings(&cFSR);
+    }
+    else if(g_strcmp0(element_name, "PaperSize") == 0)
+    {
         strcpy(cFSR.cPaperSize.sPaperSizeName, attribute_values[0]);
-		sscanf(attribute_values[1], "%f", &f);
+        sscanf(attribute_values[1], "%f", &f);
         cFSR.cPaperSize.dPaperWidth = f;
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.cPaperSize.dPaperHeight = f;
-		pApp->SetPaperSize(&cFSR);
+        pApp->SetPaperSize(&cFSR);
     }
-	else if(g_strcmp0(element_name, "LengthUnit") == 0)
-	{
+    else if(g_strcmp0(element_name, "LengthUnit") == 0)
+    {
         strcpy(cFSR.cLenUnit.sName, attribute_values[0]);
         strcpy(cFSR.cLenUnit.sAbbrev, attribute_values[1]);
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.cLenUnit.dBaseToUnit = f;
         strcpy(cFSR.cLenUnit.sAbbrev2, attribute_values[3]);
-		pApp->SetLengthUnit(&cFSR);
+        pApp->SetLengthUnit(&cFSR);
     }
-	else if(g_strcmp0(element_name, "AngularUnit") == 0)
-	{
+    else if(g_strcmp0(element_name, "AngularUnit") == 0)
+    {
         strcpy(cFSR.cAngUnit.sName, attribute_values[0]);
         strcpy(cFSR.cAngUnit.sAbbrev, attribute_values[1]);
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.cAngUnit.dBaseToUnit = f;
         strcpy(cFSR.cAngUnit.sAbbrev2, attribute_values[3]);
-		pApp->SetAngularUnit(&cFSR);
+        pApp->SetAngularUnit(&cFSR);
     }
-	else if(g_strcmp0(element_name, "PaperUnit") == 0)
-	{
+    else if(g_strcmp0(element_name, "PaperUnit") == 0)
+    {
         strcpy(cFSR.cPaperUnit.sName, attribute_values[0]);
         strcpy(cFSR.cPaperUnit.sAbbrev, attribute_values[1]);
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.cPaperUnit.dBaseToUnit = f;
         strcpy(cFSR.cPaperUnit.sAbbrev2, attribute_values[3]);
-		pApp->SetPaperUnit(&cFSR);
+        pApp->SetPaperUnit(&cFSR);
     }
-	else if(g_strcmp0(element_name, "GraphUnit") == 0)
-	{
+    else if(g_strcmp0(element_name, "GraphUnit") == 0)
+    {
         strcpy(cFSR.cGraphUnit.sName, attribute_values[0]);
         strcpy(cFSR.cGraphUnit.sAbbrev, attribute_values[1]);
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.cGraphUnit.dBaseToUnit = f;
         strcpy(cFSR.cGraphUnit.sAbbrev2, attribute_values[3]);
-		pApp->SetGraphUnit(&cFSR);
+        pApp->SetGraphUnit(&cFSR);
     }
-	else if(g_strcmp0(element_name, "Dimensioning") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &i);
+    else if(g_strcmp0(element_name, "Dimensioning") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &i);
         cFSR.iArrowType = i;
-		sscanf(attribute_values[1], "%f", &f);
+        sscanf(attribute_values[1], "%f", &f);
         cFSR.dArrowLen = f;
-		sscanf(attribute_values[2], "%f", &f);
+        sscanf(attribute_values[2], "%f", &f);
         cFSR.dArrowWidth = f;
-		sscanf(attribute_values[3], "%d", &i);
+        sscanf(attribute_values[3], "%d", &i);
         cFSR.bFontAttrs = i;
-		sscanf(attribute_values[4], "%f", &f);
+        sscanf(attribute_values[4], "%f", &f);
         cFSR.dFontSize = f;
-		sscanf(attribute_values[5], "%f", &f);
+        sscanf(attribute_values[5], "%f", &f);
         cFSR.dBaseLine = f;
         strcpy(cFSR.sFontFace, attribute_values[6]);
         strcpy(cFSR.sLengthMask, attribute_values[7]);
         strcpy(cFSR.sAngleMask, attribute_values[8]);
-		pApp->SetDimensioning(&cFSR);
+        pApp->SetDimensioning(&cFSR);
     }
-	else if(g_strcmp0(element_name, "FileSetupDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "FileSetupDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetFileSetupDlg(left, top);
     }
-	else if(g_strcmp0(element_name, "LineStyleDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "LineStyleDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetLineStyleDlg(left, top);
     }
-	else if(g_strcmp0(element_name, "DimEditDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "DimEditDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetDimEditDlg(left, top);
     }
-	else if(g_strcmp0(element_name, "StatDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "StatDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetStatDlg(left, top);
     }
-	else if(g_strcmp0(element_name, "SnapDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "SnapDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetSnapDlg(left, top);
     }
-	else if(g_strcmp0(element_name, "ScaleDlg") == 0)
-	{
-		sscanf(attribute_values[0], "%d", &left);
-		sscanf(attribute_values[1], "%d", &top);
+    else if(g_strcmp0(element_name, "ScaleDlg") == 0)
+    {
+        sscanf(attribute_values[0], "%d", &left);
+        sscanf(attribute_values[1], "%d", &top);
         pApp->SetScaleDlg(left, top);
     }
-	return;
+    return;
 }
 
 void od_end_elem(GMarkupParseContext *context, const gchar *element_name,
-	gpointer user_data, GError **error)
+    gpointer user_data, GError **error)
 {
-	return;
+    return;
 }
 
 /* Called for character data */
 /* text is not nul-terminated */
 void od_text_elem(GMarkupParseContext *context, const gchar *text, gsize text_len,  
-	gpointer user_data, GError **error)
+    gpointer user_data, GError **error)
 {
-	return;
+    return;
 }
 
 void CDApplication::RestoreSettings()
 {
-	const gchar *homedir = g_get_home_dir();
-	gchar *cnfname = g_strconcat(homedir, "/.SteamCAD/config.xml", NULL);
+    const gchar *homedir = g_get_home_dir();
+    gchar *cnfname = g_strconcat(homedir, "/.SteamCAD/config.xml", NULL);
 
-	gchar *filecont = NULL;
-	gsize slen = 0;
+    gchar *filecont = NULL;
+    gsize slen = 0;
 
-	if(g_file_get_contents(cnfname, &filecont, &slen, NULL))
-	{
-		GMarkupParser parser = {od_start_elem, od_end_elem, od_text_elem, NULL, NULL};
-		GMarkupParseContext* pmpc = g_markup_parse_context_new(&parser, 
-			(GMarkupParseFlags)0, this, NULL);
-		g_markup_parse_context_parse(pmpc, filecont, slen, NULL);
-		g_markup_parse_context_free(pmpc);
-		g_free(filecont);
-	}
-	else
-	{
-		gtk_window_move(GTK_WINDOW(m_pMainWnd), 10, 10);
-		gtk_window_resize(GTK_WINDOW(m_pMainWnd), 400, 300);
-		gtk_window_set_gravity(GTK_WINDOW(m_pMainWnd), GDK_GRAVITY_STATIC);
-	}
-	
-	g_free(cnfname);
+    if(g_file_get_contents(cnfname, &filecont, &slen, NULL))
+    {
+        GMarkupParser parser = {od_start_elem, od_end_elem, od_text_elem, NULL, NULL};
+        GMarkupParseContext* pmpc = g_markup_parse_context_new(&parser, 
+	        (GMarkupParseFlags)0, this, NULL);
+        g_markup_parse_context_parse(pmpc, filecont, slen, NULL);
+        g_markup_parse_context_free(pmpc);
+        g_free(filecont);
+    }
+    else
+    {
+        gtk_window_move(GTK_WINDOW(m_pMainWnd), 10, 10);
+        gtk_window_resize(GTK_WINDOW(m_pMainWnd), 400, 300);
+        gtk_window_set_gravity(GTK_WINDOW(m_pMainWnd), GDK_GRAVITY_STATIC);
+    }
 
-	return;
+    g_free(cnfname);
+
+    return;
 }
 
 void CDApplication::SaveSettings()
 {
-	const gchar *homedir = g_get_home_dir();
-	gchar *cnfdir = g_strconcat(homedir, "/.SteamCAD", NULL);
-	g_mkdir(cnfdir, S_IRWXU | S_IRWXG);
-	gchar *cnfname = g_strconcat(cnfdir, "/config.xml", NULL);
-	FILE *fp = g_fopen(cnfname, "w");
-	g_free(cnfname);
-	g_free(cnfdir);
+    const gchar *homedir = g_get_home_dir();
+    gchar *cnfdir = g_strconcat(homedir, "/.SteamCAD", NULL);
+    g_mkdir(cnfdir, S_IRWXU | S_IRWXG);
+    gchar *cnfname = g_strconcat(cnfdir, "/config.xml", NULL);
+    FILE *fp = g_fopen(cnfname, "w");
+    g_free(cnfname);
+    g_free(cnfdir);
 
-	gint x, y, dx, dy;
-	gtk_window_get_position(GTK_WINDOW(m_pMainWnd), &x, &y);
-	gtk_window_get_size(GTK_WINDOW(m_pMainWnd), &dx, &dy);
-	gint igr = gtk_window_get_gravity(GTK_WINDOW(m_pMainWnd));
+    gint x, y, dx, dy;
+    gtk_window_get_position(GTK_WINDOW(m_pMainWnd), &x, &y);
+    gtk_window_get_size(GTK_WINDOW(m_pMainWnd), &dx, &dy);
+    gint igr = gtk_window_get_gravity(GTK_WINDOW(m_pMainWnd));
 
-	gchar sbuf[256];
-	g_strlcpy(sbuf, "<?xml version=\"1.0\"?>\n<!--SteamCAD Workspace Settings-->\n<Settings>\n", 256);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
-	g_sprintf(sbuf, "  <MainForm Left=\"%d\" Top=\"%d\" Width=\"%d\" Height=\"%d\" Gravity=\"%d\"/>\n", 
-		x, y, dx, dy, igr);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    gchar sbuf[256];
+    g_strlcpy(sbuf, "<?xml version=\"1.0\"?>\n<!--SteamCAD Workspace Settings-->\n<Settings>\n", 256);
+        fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    g_sprintf(sbuf, "  <MainForm Left=\"%d\" Top=\"%d\" Width=\"%d\" Height=\"%d\" Gravity=\"%d\"/>\n", 
+        x, y, dx, dy, igr);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "  <DrawSettings PaperUnits=\"%d\" LastExportType=\"%d\"\n", m_bPaperUnits, m_iLastExportType);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    g_sprintf(sbuf, "  <DrawSettings PaperUnits=\"%d\" LastExportType=\"%d\"\n", m_bPaperUnits, m_iLastExportType);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
     if(m_sLastPath)	g_sprintf(sbuf, "    LastPath=\"%s\"/>\n", m_sLastPath);
     else strcpy(sbuf, "    LastPath=\"\"/>\n");
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "  <PageSettings Portrait=\"%d\" ScaleNomin=\"%.3f\" ScaleDenom=\"%.3f\"\n",
+    g_sprintf(sbuf, "  <PageSettings Portrait=\"%d\" ScaleNomin=\"%.3f\" ScaleDenom=\"%.3f\"\n",
         m_cFSR.bPortrait, m_cFSR.dScaleNomin, m_cFSR.dScaleDenom);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    AngularGrid=\"%.3f\" XGrid=\"%.3f\" YGrid=\"%.3f\" DefLineWidth=\"%.3f\">\n",
+    g_sprintf(sbuf, "    AngularGrid=\"%.3f\" XGrid=\"%.3f\" YGrid=\"%.3f\" DefLineWidth=\"%.3f\">\n",
         m_cFSR.dAngGrid, m_cFSR.dXGrid, m_cFSR.dYGrid, m_cFSR.dDefLineWidth);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <PaperSize PaperName=\"%s\" PaperWidth=\"%.3f\" PaperHeight=\"%.3f\"/>\n",
+    g_sprintf(sbuf, "    <PaperSize PaperName=\"%s\" PaperWidth=\"%.3f\" PaperHeight=\"%.3f\"/>\n",
         m_cFSR.cPaperSize.sPaperSizeName, m_cFSR.cPaperSize.dPaperWidth, m_cFSR.cPaperSize.dPaperHeight);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <LengthUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
+    g_sprintf(sbuf, "    <LengthUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
         m_cFSR.cLenUnit.sName, m_cFSR.cLenUnit.sAbbrev, m_cFSR.cLenUnit.dBaseToUnit, m_cFSR.cLenUnit.sAbbrev2);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <AngularUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
+    g_sprintf(sbuf, "    <AngularUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
         m_cFSR.cAngUnit.sName, m_cFSR.cAngUnit.sAbbrev, m_cFSR.cAngUnit.dBaseToUnit, m_cFSR.cAngUnit.sAbbrev2);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <PaperUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
+    g_sprintf(sbuf, "    <PaperUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
         m_cFSR.cPaperUnit.sName, m_cFSR.cPaperUnit.sAbbrev, m_cFSR.cPaperUnit.dBaseToUnit, m_cFSR.cPaperUnit.sAbbrev2);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <GraphUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
+    g_sprintf(sbuf, "    <GraphUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
         m_cFSR.cGraphUnit.sName, m_cFSR.cGraphUnit.sAbbrev, m_cFSR.cGraphUnit.dBaseToUnit, m_cFSR.cGraphUnit.sAbbrev2);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "    <Dimensioning ArrowType=\"%d\" ArrowLength=\"%.3f\" ArrowWidth=\"%.3f\" FontAttrs=\"%d\" FontSize=\"%.3f\"\n",
+    g_sprintf(sbuf, "    <Dimensioning ArrowType=\"%d\" ArrowLength=\"%.3f\" ArrowWidth=\"%.3f\" FontAttrs=\"%d\" FontSize=\"%.3f\"\n",
         m_cFSR.iArrowType, m_cFSR.dArrowLen, m_cFSR.dArrowWidth, m_cFSR.bFontAttrs, m_cFSR.dFontSize);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	g_sprintf(sbuf, "      BaseLine=\"%.3f\" FontFace=\"%s\" LengthMask=\"%s\" AngleMask=\"%s\"/>\n  </PageSettings>\n",
+    g_sprintf(sbuf, "      BaseLine=\"%.3f\" FontFace=\"%s\" LengthMask=\"%s\" AngleMask=\"%s\"/>\n  </PageSettings>\n",
         m_cFSR.dBaseLine, m_cFSR.sFontFace, m_cFSR.sLengthMask, m_cFSR.sAngleMask);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
     m_pFileSetupDlg->SaveSettings(fp);
     m_pLineStyleDlg->SaveSettings(fp);
@@ -591,20 +600,20 @@ void CDApplication::SaveSettings()
     m_pSnapDlg->SaveSettings(fp);
     m_pScaleDlg->SaveSettings(fp);
 
-	g_strlcpy(sbuf, "</Settings>", 256);
-	fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    g_strlcpy(sbuf, "</Settings>", 256);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-	fclose(fp);
-	return;
+    fclose(fp);
+    return;
 }
 
 void CDApplication::SetPosition(gint iLeft, gint iTop, gint iWidth, 
-	gint iHeight, GdkGravity iGrav)
+    gint iHeight, GdkGravity iGrav)
 {
-	gtk_window_move(GTK_WINDOW(m_pMainWnd), iLeft, iTop);
-	gtk_window_resize(GTK_WINDOW(m_pMainWnd), iWidth, iHeight);
-	gtk_window_set_gravity(GTK_WINDOW(m_pMainWnd), iGrav);
-	return;
+    gtk_window_move(GTK_WINDOW(m_pMainWnd), iLeft, iTop);
+    gtk_window_resize(GTK_WINDOW(m_pMainWnd), iWidth, iHeight);
+    gtk_window_set_gravity(GTK_WINDOW(m_pMainWnd), iGrav);
+    return;
 }
 
 void CDApplication::SetFileSetupDlg(gint iLeft, gint iTop)
@@ -649,13 +658,13 @@ void CDApplication::SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, 
     }
 }
 
-void CDApplication::Terminate()
+gboolean CDApplication::Terminate()
 {
-    if(!PromptForSave(m_pMainWnd)) return;
+    if(!PromptForSave(m_pMainWnd)) return TRUE;
 
     SaveSettings();
-	gtk_main_quit();
-	return;
+    gtk_main_quit();
+    return FALSE;
 }
 
 void CDApplication::SetPageSettings(PDFileSetupRec pFSR)
@@ -723,36 +732,36 @@ void CDApplication::SetDimensioning(PDFileSetupRec pFSR)
 
 GtkWidget* CDApplication::GetMenuBar()
 {
-	GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
+    GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
     GList *pChilds = gtk_container_get_children(GTK_CONTAINER(wBox));
-	GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 0)->data;
-	return(pane);
+    GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 0)->data;
+    return(pane);
 }
 
 GtkWidget* CDApplication::GetDrawing()
 {
-	GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
+    GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
     GList *pChilds = gtk_container_get_children(GTK_CONTAINER(wBox));
-	GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 1)->data;
-	return(pane);
+    GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 1)->data;
+    return(pane);
 }
 
 GtkWidget* CDApplication::GetStatusBar()
 {
-	GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
+    GtkBox *wBox = (GtkBox*)gtk_bin_get_child(GTK_BIN(m_pMainWnd));
     GList *pChilds = gtk_container_get_children(GTK_CONTAINER(wBox));
-	GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 2)->data;
-	return(pane);
+    GtkWidget *pane = (GtkWidget*)g_list_nth(pChilds, 2)->data;
+    return(pane);
 }
 
 void CDApplication::SetStatusBarMsg(int iPanel, const gchar *pMsg)
 {
-	GtkStatusbar *pStatBar = (GtkStatusbar*)GetStatusBar();
+    GtkStatusbar *pStatBar = (GtkStatusbar*)GetStatusBar();
     switch(iPanel)
     {
     case 0:
-	    gtk_statusbar_pop(pStatBar, 0);
-	    gtk_statusbar_push(pStatBar, 0, pMsg);
+        gtk_statusbar_pop(pStatBar, 0);
+        gtk_statusbar_push(pStatBar, 0, pMsg);
         break;
     case 1:
         gtk_label_set_text(GTK_LABEL(m_pStatLab1), pMsg);
@@ -761,7 +770,7 @@ void CDApplication::SetStatusBarMsg(int iPanel, const gchar *pMsg)
         gtk_label_set_text(GTK_LABEL(m_pStatLab3), pMsg);
         break;
     }
-	return;
+    return;
 }
 
 void CDApplication::Configure(GtkWidget *widget, GdkEventConfigure *event)
@@ -1449,11 +1458,29 @@ void CDApplication::Paint(GtkWidget *widget, GdkEventExpose *event)
         cairo_paint(cr2);
     }
 
+    int iDynMode = GetDynMode();
+    CDLine cPtX;
+    cPtX.cOrigin = m_cLastDrawPt;
+    if(iDynMode == 1)
+    {
+        cPtX.bIsSet = m_cLastDynPt.bIsSet;
+        cPtX.cDirection = m_cLastDynPt.cOrigin;
+    }
+    else if(iDynMode == 2)
+    {
+        cPtX.cDirection.x = 0.0;
+        if(IS_LENGTH_VAL(m_iRestrictSet))
+        {
+            cPtX.cDirection.x = 1.0;
+            cPtX.cDirection.y = m_dSavedDist;
+        }
+    }
+
     if((m_iDrawMode > 0) || (m_iToolMode > 0))
     {
         if(m_pActiveObject)
         {
-            m_pActiveObject->BuildPrimitives(&m_cLastDrawPt, m_cLastDynPt, GetDynMode(), &cdr, false, NULL);
+            m_pActiveObject->BuildPrimitives(cPtX, iDynMode, &cdr, false, NULL);
             DrawObject(cr2, m_pActiveObject, 1, -2);
         }
 
@@ -1475,7 +1502,7 @@ void CDApplication::Paint(GtkWidget *widget, GdkEventExpose *event)
             m_pDrawObjects->BuildAllPrimitives(&cdr);
             if(m_pActiveObject)
             {
-                m_pActiveObject->BuildPrimitives(&m_cLastDrawPt, m_cLastDynPt, GetDynMode(), &cdr, false, NULL);
+                m_pActiveObject->BuildPrimitives(cPtX, iDynMode, &cdr, false, NULL);
             }
         }
     }
@@ -1503,28 +1530,31 @@ bool CDApplication::PromptForSave(GtkWidget *widget)
 bool CDApplication::SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly)
 {
     bool bSave = true;
+    bool bNewFile = false;
     if(!(*psFile))
     {
-	    //GError *error = NULL;
-	    GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save File"),
-		    GTK_WINDOW(widget), GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
-		    GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
-	    g_object_set(dialog, "do_overwrite_confirmation", TRUE, NULL);
+        bNewFile = true;
 
-	    GtkFileFilter *flt = gtk_file_filter_new();
-	    gtk_file_filter_set_name(flt, _("SteamCAD Files"));
-	    gtk_file_filter_add_pattern(flt, "*.sdr");
-	    gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
+        //GError *error = NULL;
+        GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save File"),
+        GTK_WINDOW(widget), GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
+        GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+        g_object_set(dialog, "do_overwrite_confirmation", TRUE, NULL);
+
+        GtkFileFilter *flt = gtk_file_filter_new();
+        gtk_file_filter_set_name(flt, _("SteamCAD Files"));
+        gtk_file_filter_add_pattern(flt, "*.sdr");
+        gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
         flt = gtk_file_filter_new();
-	    gtk_file_filter_set_name(flt, _("All files"));
+        gtk_file_filter_set_name(flt, _("All files"));
         gtk_file_filter_add_pattern(flt, "*");
-	    gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
+        gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
 
         if(m_sLastPath)
-	        gtk_file_chooser_set_current_folder((GtkFileChooser*)dialog, m_sLastPath);
+            gtk_file_chooser_set_current_folder((GtkFileChooser*)dialog, m_sLastPath);
 
-	    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-	    {
+        if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+        {
             if(m_sLastPath) g_free(m_sLastPath);
             gchar *sLocFileName = gtk_file_chooser_get_filename((GtkFileChooser*)dialog);
             gchar *sDot = strrchr(sLocFileName, '.');
@@ -1536,11 +1566,11 @@ bool CDApplication::SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly
                 strcat(*psFile, ".sdr");
                 g_free(sLocFileName);
             }
-		    else *psFile = sLocFileName;
+            else *psFile = sLocFileName;
             m_sLastPath = gtk_file_chooser_get_current_folder((GtkFileChooser*)dialog);
-	    }
+        }
         else bSave = false;
-	    gtk_widget_destroy(dialog);
+        gtk_widget_destroy(dialog);
     }
     if(!bSave) return false;
 
@@ -1549,7 +1579,7 @@ bool CDApplication::SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly
     m_pDrawObjects->SaveToFile(pf, true, bSelectOnly);
     fclose(pf);
 
-    SetTitle(widget, true);
+    if(!bNewFile) SetTitle(widget, true);
     return true;
 }
 
@@ -1721,25 +1751,25 @@ bool CDApplication::LoadFile(GtkWidget *widget, gchar **psFile, bool bClear)
 {
     bool bRead = false;
 
-	GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Open File"),
-		GTK_WINDOW(widget), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
-		GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	GtkFileFilter *flt = gtk_file_filter_new();
-	gtk_file_filter_set_name(flt, _("SteamCAD Files"));
-	gtk_file_filter_add_pattern(flt, "*.sdr");
-	gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Open File"),
+    GTK_WINDOW(widget), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+    GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+    GtkFileFilter *flt = gtk_file_filter_new();
+    gtk_file_filter_set_name(flt, _("SteamCAD Files"));
+    gtk_file_filter_add_pattern(flt, "*.sdr");
+    gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
     flt = gtk_file_filter_new();
-	gtk_file_filter_set_name(flt, _("All files"));
+    gtk_file_filter_set_name(flt, _("All files"));
     gtk_file_filter_add_pattern(flt, "*");
-	gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
+    gtk_file_chooser_add_filter((GtkFileChooser*)dialog, flt);
     if(m_sLastPath)
         gtk_file_chooser_set_current_folder((GtkFileChooser*)dialog, m_sLastPath);
 
-	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-	{
+    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
         if(m_sLastPath) g_free(m_sLastPath);
         if(*psFile) g_free(*psFile);
-		*psFile = gtk_file_chooser_get_filename((GtkFileChooser*)dialog);
+        *psFile = gtk_file_chooser_get_filename((GtkFileChooser*)dialog);
         m_sLastPath = gtk_file_chooser_get_current_folder((GtkFileChooser*)dialog);
 
         // load the file
@@ -1760,9 +1790,9 @@ bool CDApplication::LoadFile(GtkWidget *widget, gchar **psFile, bool bClear)
             gdk_window_invalidate_rect(draw->window, NULL, FALSE);
             SetTitle(widget, true);
         }
-	}
+    }
 
-	gtk_widget_destroy(dialog);
+    gtk_widget_destroy(dialog);
     return bRead;
 }
 
@@ -1787,6 +1817,7 @@ void CDApplication::FileSaveAsCmd(bool bFromAccel)
     {
         if(m_sFileName) g_free(m_sFileName);
         m_sFileName = sNewName;
+        SetTitle(m_pMainWnd, true);
     }
     return;
 }
@@ -1814,8 +1845,8 @@ void CDApplication::FileExportCmd(bool bFromAccel)
 
     //GError *error = NULL;
     GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save File"),
-	    GTK_WINDOW(m_pMainWnd), GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
-	    GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+        GTK_WINDOW(m_pMainWnd), GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
+        GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
     g_object_set(dialog, "do_overwrite_confirmation", TRUE, NULL);
 
     GtkFileFilter *flt = gtk_file_filter_new();
@@ -1880,7 +1911,7 @@ void CDApplication::FileExportCmd(bool bFromAccel)
     if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
         if(m_sLastPath) g_free(m_sLastPath);
-	    sFile = gtk_file_chooser_get_filename((GtkFileChooser*)dialog);
+        sFile = gtk_file_chooser_get_filename((GtkFileChooser*)dialog);
         m_sLastPath = gtk_file_chooser_get_current_folder((GtkFileChooser*)dialog);
         pActFilter = gtk_file_chooser_get_filter((GtkFileChooser*)dialog);
         const gchar *sFltName = gtk_file_filter_get_name(pActFilter);
@@ -2502,6 +2533,8 @@ void CDApplication::EditToggleSnapCmd(GtkWidget *widget)
 
 void CDApplication::EditPaperUnitsCmd(GtkWidget *widget, bool bFromAccel)
 {
+    if(m_bSettingProps) return;
+
     if(bFromAccel)
     {
         GtkWidget *menu = GetMenuBar();
@@ -2670,12 +2703,14 @@ void CDApplication::ToolsCommand(int iCmd, bool bFromAccel)
     switch(iCmd)
     {
     case IDM_TOOLSKNIFE:
-    //case IDM_TOOLSBEVEL:
     case IDM_TOOLSROUND:
     case IDM_TOOLSEXTEND:
     case IDM_TOOLSCONFLICTS:
     case IDM_TOOLSMEASURE:
         SetTool(iCmd - IDM_TOOLSKNIFE + 20);
+        break;
+    case IDM_TOOLSBREAK:
+        ToolsBreakCmd();
         break;
     case IDM_TOOLSCALE:
         ToolsScaleCmd();
@@ -2689,7 +2724,7 @@ void CDApplication::ToolsCommand(int iCmd, bool bFromAccel)
 
 void CDApplication::ViewFitCmd(GtkWidget *widget)
 {
-	GtkWidget *draw = GetDrawing();
+    GtkWidget *draw = GetDrawing();
 
     int iWidth = gdk_window_get_width(draw->window);
     int iHeight = gdk_window_get_height(draw->window);
@@ -2960,7 +2995,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
 
     if(m_iButton > 0) return;
 
-    int iCnt;
+    int iCnt = 0;
     PDObject pObj1, pObj2;
 
     m_cLastSnapPt.x = xPos;
@@ -2990,6 +3025,8 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
             bHasLastPoint = m_pActiveObject->GetPoint(0, 0, &cLstInPt);
         }
 
+        CDLine cPtX;
+
         if(event->state & GDK_CONTROL_MASK)
         {
             bDoSnap = false;
@@ -2997,15 +3034,14 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
             if(bHasLastPoint)
             {
                 CDPoint cMainDir = {1.0, 0.0};
-                CDLine cPtX;
 
                 iCnt = m_pDrawObjects->GetSelectCount();
                 if(iCnt == 1)
                 {
                     pObj1 = m_pDrawObjects->GetSelected(0);
                     if(m_cLastDynPt.bIsSet)
-                        pObj1->GetDistFromPt(m_cLastDynPt.cOrigin, m_cLastDynPt.cOrigin, &cPtX, NULL);
-                    else pObj1->GetDistFromPt(cLstInPt.cPoint, cLstInPt.cPoint, &cPtX, NULL);
+                        pObj1->GetDistFromPt(m_cLastDynPt.cOrigin, m_cLastDynPt.cOrigin, true, &cPtX, NULL);
+                    else pObj1->GetDistFromPt(cLstInPt.cPoint, cLstInPt.cPoint, true, &cPtX, NULL);
                     if(cPtX.bIsSet) cMainDir = cPtX.cDirection;
                 }
 
@@ -3016,6 +3052,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
                     cDir1 = pObj1->GetPointToDir(cLstInPt.cPoint, m_dSavedAngle, cDir2);
                     m_cLastDynPt.bIsSet = true;
                     m_cLastDynPt.cOrigin = cDir1;
+                    m_cLastDynPt.cDirection.x = 0.0;
                     m_cLastDrawPt = cDir2;
                     bDoSnap = true;
                 }
@@ -3051,6 +3088,8 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
         }
         else m_cLastDynPt.bIsSet = false;
 
+        bool bRestrict = false;
+        double dRestrictVal = m_dRestrictValue;
         if(bDoSnap)
         {
             m_cLastDrawPt.x = (m_cLastSnapPt.x - m_cViewOrigin.x)/m_dUnitScale;
@@ -3059,6 +3098,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
 
             int iSnapType = 0;
             if(m_iToolMode == 20 + IDM_TOOLSCONFLICTS - IDM_TOOLSKNIFE) iSnapType = 1;
+            if(m_iToolMode == 1) iSnapType = 2;
             if(m_pDrawObjects->GetSnapPoint(iSnapType, m_cLastDrawPt,
                 dTol, &cSnapPt, m_pActiveObject) > 0)
             {
@@ -3081,8 +3121,6 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
                 m_cLastSnapPt.y = m_cViewOrigin.y + (int)Round(m_cLastDrawPt.y*m_dUnitScale);
             }
 
-            bool bRestrict = false;
-            double dRestrictVal = m_dRestrictValue;
             if(m_pActiveObject)
             {
                 if((m_iDrawMode == 1) && (iDynMode != 2))
@@ -3133,37 +3171,59 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
             }
         }
 
+        cPtX.cOrigin = m_cLastDrawPt;
+        if(iDynMode == 1)
+        {
+            cPtX.bIsSet = m_cLastDynPt.bIsSet;
+            cPtX.cDirection = m_cLastDynPt.cOrigin;
+        }
+        else if(iDynMode == 2)
+        {
+            cPtX.cDirection.x = 0.0;
+            if(event->state & GDK_SHIFT_MASK) cPtX.cDirection.x = -1.0;
+            if(bRestrict)
+            {
+                cPtX.cDirection.x = 1.0;
+                cPtX.cDirection.y = dRestrictVal;
+                m_dSavedDist = dRestrictVal;
+            }
+        }
+
         if(m_pActiveObject)
         {
-            double dVal;
-            if(m_pActiveObject->GetDynValue(m_cLastDrawPt, iDynMode, &dVal))
+            if(!bRestrict)
             {
-                if((m_iDrawMode == 1) && (iDynMode != 2))
+                double dVal;
+                if(m_pActiveObject->GetDynValue(m_cLastDrawPt, iDynMode, &dVal))
                 {
-                    dVal *= m_cFSR.cAngUnit.dBaseToUnit*180.0/M_PI;
-                    sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
-                        m_cFSR.cAngUnit.sAbbrev);
-                }
-                else
-                {
-                    if(m_bPaperUnits)
+                    m_dSavedDist = dVal;
+                    if((m_iDrawMode == 1) && (iDynMode != 2))
                     {
-                        dVal /= m_cFSR.cPaperUnit.dBaseToUnit;
+                        dVal *= m_cFSR.cAngUnit.dBaseToUnit*180.0/M_PI;
                         sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
-                            m_cFSR.cPaperUnit.sAbbrev);
+                            m_cFSR.cAngUnit.sAbbrev);
                     }
                     else
                     {
-                        dVal /= m_dDrawScale;
-                        dVal /= m_cFSR.cLenUnit.dBaseToUnit;
-                        sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
-                            m_cFSR.cLenUnit.sAbbrev);
+                        if(m_bPaperUnits)
+                        {
+                            dVal /= m_cFSR.cPaperUnit.dBaseToUnit;
+                            sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
+                                m_cFSR.cPaperUnit.sAbbrev);
+                        }
+                        else
+                        {
+                            dVal /= m_dDrawScale;
+                            dVal /= m_cFSR.cLenUnit.dBaseToUnit;
+                            sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
+                                m_cFSR.cLenUnit.sAbbrev);
+                        }
                     }
+                    SetStatusBarMsg(1, m_sStatus2Msg);
                 }
-                SetStatusBarMsg(1, m_sStatus2Msg);
             }
 
-            m_pActiveObject->BuildPrimitives(&m_cLastDrawPt, m_cLastDynPt, iDynMode, &cdr, false, NULL);
+            m_pActiveObject->BuildPrimitives(cPtX, iDynMode, &cdr, false, NULL);
 
             DrawObject(cr, m_pActiveObject, 1, -2);
         }
@@ -3176,7 +3236,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
                 CDFileAttrs cFAttrs;
                 FilePropsToData(&cFAttrs);
 
-                pObj1->BuildPrimitives(&m_cLastDrawPt, m_cLastDynPt, iDynMode, &cdr, false, &cFAttrs);
+                pObj1->BuildPrimitives(cPtX, iDynMode, &cdr, false, &cFAttrs);
                 DrawObject(cr, pObj1, 1, -1);
             }
         }
@@ -3559,7 +3619,11 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
         else
         {
             int iCtrl = 0;
-            if(m_iToolMode == 1) iCtrl = 2;
+            if(m_iToolMode == 1)
+            {
+                iCtrl = 2;
+                if(event->state & GDK_SHIFT_MASK) iCtrl = 3;
+            }
             if(m_cLastDynPt.bIsSet)
             {
                 CDInputPoint cInPt;
@@ -3821,6 +3885,34 @@ void CDApplication::EnableSnap()
 void CDApplication::DisableSnap()
 {
     if(m_pHighObject) m_pHighObject->SetSnapTo(false);
+}
+
+void CDApplication::ToolsBreakCmd()
+{
+    GtkWidget *draw = GetDrawing();
+
+    int iWidth = gdk_window_get_width(draw->window);
+    int iHeight = gdk_window_get_height(draw->window);
+
+    CDRect cdr;
+    cdr.cPt1.x = -m_cViewOrigin.x/m_dUnitScale;
+    cdr.cPt1.y = -m_cViewOrigin.y/m_dUnitScale;
+    cdr.cPt2.x = (iWidth - m_cViewOrigin.x)/m_dUnitScale;
+    cdr.cPt2.y = (iHeight - m_cViewOrigin.y)/m_dUnitScale;
+
+    PDPtrList pRegions = new CDPtrList();
+    pRegions->SetDblVal(m_dUnitScale);
+
+    m_pDrawObjects->BreakSelObjects(&cdr, pRegions);
+    {
+        GdkRectangle cRect;
+        if(GetUpdateRegion(pRegions, &cRect))
+            gdk_window_invalidate_rect(draw->window, &cRect, FALSE);
+        SetTitle(m_pMainWnd, false);
+    }
+
+    ClearPolygonList(pRegions);
+    delete pRegions;
 }
 
 void CDApplication::ToolsScaleCmd()

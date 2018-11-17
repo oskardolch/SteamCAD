@@ -5,10 +5,17 @@
 #include "MainWnd.hpp"
 #include "SteamCAD.rh"
 
+//HANDLE g_hConsole;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR szCmdLine, int iCmdShow)
 {
     CoInitialize(NULL);
+/*AllocConsole();
+g_hConsole = CreateConsoleScreenBuffer(GENERIC_WRITE, FILE_SHARE_READ,
+NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+SetConsoleMode(g_hConsole, ENABLE_PROCESSED_OUTPUT);
+SetConsoleActiveScreenBuffer(g_hConsole);*/
 
     INITCOMMONCONTROLSEX ictr;
     ictr.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -58,6 +65,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     delete mw;
 
+//FreeConsole();
     CoUninitialize();
 
     ExitProcess(0);

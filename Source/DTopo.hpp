@@ -5,10 +5,10 @@ typedef struct CDPoint
 {
     double x;
     double y;
-	CDPoint& operator+=(const CDPoint& p1);
-	CDPoint& operator-=(const CDPoint& p1);
-	CDPoint& operator*=(const double& d1);
-	CDPoint& operator/=(const double& d1);
+	  CDPoint& operator+=(const CDPoint& p1);
+	  CDPoint& operator-=(const CDPoint& p1);
+	  CDPoint& operator*=(const double& d1);
+	  CDPoint& operator/=(const double& d1);
     CDPoint& operator=(const double& d1);
 } *PDPoint;
 
@@ -25,10 +25,12 @@ double GetDist(CDPoint cPt1, CDPoint cPt2);
 CDPoint VectProd(CDPoint cp1, CDPoint cp2);
 CDPoint GetNormal(CDPoint cPt1);
 
-int LineXLine(bool b01, CDPoint cPt1, CDPoint cDir1, CDPoint cPt2, CDPoint cDir2, PDPoint pRes);
+int SegXSeg(CDPoint cPt11, CDPoint cPt12, CDPoint cPt21, CDPoint cPt22, PDPoint pRes);
+int LineXSeg(CDPoint cLnOrg, CDPoint cLnDir, CDPoint cPt1, CDPoint cPt2, PDPoint pRes);
+int LineXLine(CDPoint cPt1, CDPoint cDir1, CDPoint cPt2, CDPoint cDir2, PDPoint pRes);
 int CircXLine(bool b01, CDPoint p11, double dRad, CDPoint p21, CDPoint p22, PDPoint pRes);
-int QuadXLine(CDPoint p11, CDPoint p12, CDPoint p13,
-    CDPoint p21, CDPoint p22, PDPoint pRes, double *pdTs);
+int QuadXSeg(PDPoint pQuad, CDPoint cPt1, CDPoint cPt2, PDPoint pRes, double *pdTs);
+int QuadXLine(PDPoint pQuad, CDPoint cLnOrg, CDPoint cLnDir, PDPoint pRes, double *pdTs);
 int BezXLine(CDPoint p11, CDPoint p12, CDPoint p13, CDPoint p14,
     CDPoint p21, CDPoint p22, PDPoint pRes, double *pdTs);
 

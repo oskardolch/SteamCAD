@@ -4,9 +4,9 @@
 #include "DDataTypes.hpp"
 
 bool AddSplinePoint(double x, double y, char iCtrl, PDPointList pPoints);
-bool BuildSplineCache(PDPoint pTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
+bool BuildSplineCache(CDLine cTmpPt, int iMode, PDPointList pPoints, PDPointList pCache,
     double *pdDist);
-int BuildSplinePrimitives(PDPoint pTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
+int BuildSplinePrimitives(CDLine cTmpPt, int iMode, PDRect pRect, PDPointList pPoints,
     PDPointList pCache, PDPrimObject pPrimList, PDRefPoint pBounds, double dOffset,
     double *pdDist, PDPoint pDrawBnds, bool bQuadsOnly = false);
 double GetSplineDistFromPt(CDPoint cPt, CDPoint cRefPt, PDPointList pCache, PDLine pPtX);
