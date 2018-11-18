@@ -1,29 +1,38 @@
 language: cpp
 compiler: gcc
-sudo: required
+sudo: require
 dist: trusty
 
-os: linux
-
-before install:
-  - sudo add-apt-repository ppa:beineri/opt-qt571-trusty -y
-  - sudo apt-get update -qq
-
 install:
-  - sudo apt-get --allow-unauthenticated install -qq qt57base libqt5opengl5-dev
+  - sudo apt-get -y install libcairo2-dev libgtk2.0-dev libdxflib-dev
 
 script:
-  - qmake PREFIX=/usr -v
-  - qmake PREFIX=/usr -r
-  - make -j4
-  - exit 0
+  - mkdir Build
+  - make libdxflib.a -j$(nproc)
+  - make main -j$(nproc)
+  - mkdir -p appdir/usr/bin ; mkdir -p appdir/usr/share/applications ; mkdir -p appdir/usr/share/steamcad # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
+  - cp Linux/steamcad.desktop appdir/usr/share/applications/ ; cp Build/SteamCAD Linux/steamcad appdir/usr/bin/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
+  - chmod +x appdir/usr/bin/* # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
+  - cp Papers/* appdir/usr/share/steamcad/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
+  - mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; cp Images/steamcad.png appdir/usr/share/icons/hicolor/256x256/apps/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1#issuecomment-439653147
+  - wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+  - chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+  - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+  - export VERSION=$(git rev-parse --short HEAD) # linuxdeployqt uses this for naming the file
+  - sed -i -e 's|Exec=steamcad|Exec=SteamCAD|g' appdir/usr/share/applications/steamcad.desktop # FIXME; super ugly. This and the following lines are an ugly hack to allow for a bash script wrapper that copies files into $HOME/.SteamCAD. The application should do that itself!
+  - ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs  # FIXME; super ugly
+  - sed -i -e 's|Exec=SteamCAD|Exec=steamcad|g' appdir/usr/share/applications/steamcad.desktop  # FIXME; super ugly
+  - ./linuxdeployqt*.AppImage --appimage-extract  # FIXME; super ugly
+  - export PATH=squashfs-root/usr/bin/:$PATH  # FIXME; super ugly. Make it pick up our private patched mksquashfs; https://github.com/plougher/squashfs-tools/pull/13/files
+  - squashfs-root/usr/bin/appimagetool -g $(readlink -f ./appdir/)  # FIXME; super ugly
 
 after_success:
+  - find appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
+  - # curl --upload-file SteamCAD*.AppImage https://transfer.sh/SteamCAD-git.$(git rev-parse --short HEAD)-x86_64.AppImage
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - if [ "$TRAVIS_TAG" != "$TRAVIS_BRANCH" ] && [ "$TRAVIS_BRANCH" == "master" ]; then export TRAVIS_EVENT_TYPE=pull_request; fi
-  - bash ./upload.sh ./SteamCAD-*.AppImage*
-
+  - bash upload.sh SteamCAD*.AppImage*
+  
 branches:
   except:
     - # Do not build tags that we create when we upload to GitHub Releases
-    - /^(?i:continuous)$/
+    - /^(?i:continuous)/
