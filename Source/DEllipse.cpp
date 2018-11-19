@@ -866,7 +866,7 @@ CDPoint GetElpsPtProj(double da, double db, CDPoint cPt, CDPoint cRefPt, double 
             }
             cProjMin = cProj;
             dDistMin = dDist;
-            bFirstSet = bInBounds[i];
+            bFirstSet |= bInBounds[i];
         }
         else if(bSecondSet)
         {

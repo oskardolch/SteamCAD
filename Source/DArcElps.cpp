@@ -1008,7 +1008,7 @@ double GetArcElpsDistFromPt(CDPoint cPt, CDPoint cRefPt, int iSrchMask, PDPointL
                 cCloseNorm = cNorm;
                 cClosePt = cPt3;
                 dMin = d1;
-                bFirstSet = bInBounds[i];
+                bFirstSet |= bInBounds[i];
 
                 if(bReverse) dRes = -(dNorm + dRad);
                 else dRes = dNorm - dRad;

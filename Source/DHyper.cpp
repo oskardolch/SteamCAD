@@ -441,6 +441,7 @@ double GetHyperPtProj(double da, double db, CDPoint cPt, CDPoint cRefPt, double 
             }
             dXMin = d1;
             du = dRoots[i];
+            bFirstSet |= bInBounds[i];
         }
         else if(bSecSet)
         {

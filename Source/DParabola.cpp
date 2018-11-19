@@ -467,6 +467,7 @@ double GetParabPtProj(double da, CDPoint cPt, CDPoint cRefPt, double dOffset, in
             }
             d1 = d2;
             dXMin = cPt1.x;
+            bFirstSet |= bInBounds[i];
         }
         else if(bSecSet)
         {
