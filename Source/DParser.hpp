@@ -42,7 +42,7 @@ const char* GetEscapeOpening(const char *psBuf);
 int GetPlainMaskLen(const char *psMask);
 void CopyPlainMask(char *sDest, const char *sSrc);
 PDUnit GetUnitAtBuf(const char *sBuf, PDUnitList pUnits);
-bool ValidateMask(const char *psMask, PDUnitList pUnits);
+int ValidateMask(const char *psMask, PDUnitList pUnits);
 int PreParseValue(char *psMask, PDUnitList pUnits, double dVal, double dScale,
     char *psBuf, int iBufSize);
 int GuessMaskUnitType(char *psMask, PDUnitList pUnits);

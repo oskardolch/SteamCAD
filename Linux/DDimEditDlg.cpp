@@ -365,10 +365,26 @@ gboolean CDDimEditDlg::Configure(GtkWidget *widget, GdkEvent *event)
 void CDDimEditDlg::OKBtnClick(GtkButton *button)
 {
     const gchar *buf = gtk_entry_get_text(GTK_ENTRY(m_pTextEdt));
-    if(!ValidateMask(buf, m_pUnits))
+    int iValRes = ValidateMask(buf, m_pUnits);
+    if(iValRes != 0)
     {
+        char sMsgBuf[64];
+        switch(iValRes)
+        {
+        case 1:
+            strcpy(sMsgBuf, _("Precision should not be negative"));
+            break;
+        case 2:
+            strcpy(sMsgBuf, _("Precision should not be greater than 16"));
+            break;
+        case 3:
+            strcpy(sMsgBuf, _("Precision value cannot be parsed"));
+            break;
+        default:
+            strcpy(sMsgBuf, _("Invalid mask (unknown reason)"));
+        }
         GtkWidget *msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pDlg), GTK_DIALOG_MODAL,
-            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("Invalid mask"));
+            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, sMsgBuf);
         gtk_dialog_run(GTK_DIALOG(msg_dlg));
         gtk_widget_destroy(msg_dlg);
         gtk_widget_grab_focus(m_pTextEdt);

@@ -271,10 +271,25 @@ INT_PTR CDDimEditDlg::OKBtnClick(HWND hWnd)
         LPSTR sNewMask = (char*)malloc((iLen + 1)*sizeof(char));
         WideCharToMultiByte(CP_UTF8, 0, m_sCurText, -1, sNewMask, iLen + 1, NULL, NULL);
 
-        if(!ValidateMask(sNewMask, m_pUnits))
+        int iValRes = ValidateMask(sNewMask, m_pUnits);
+        if(iValRes != 0)
         {
             free(sNewMask);
-            LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+            switch(iValRes)
+            {
+            case 1:
+                LoadString(m_hInstance, IDS_EPRECNEGATIVE, msg, 128);
+                break;
+            case 2:
+                LoadString(m_hInstance, IDS_EPRECTOOLARGE, msg, 128);
+                break;
+            case 3:
+                LoadString(m_hInstance, IDS_EPRECCANNOTPARSE, msg, 128);
+                break;
+            default:
+                LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+            }
+
             LoadString(m_hInstance, IDS_ERRORBASE, buf, 32);
             MessageBox(hWnd, msg, buf, MB_OK | MB_ICONEXCLAMATION);
             wnd = GetDlgItem(hWnd, DED_EDT_TEXT);

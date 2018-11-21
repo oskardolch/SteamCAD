@@ -488,9 +488,24 @@ INT_PTR CDFileSetupDlg::OKBtnClick(HWND hWnd)
     wnd = GetDlgItem(hWnd, FSD_EDT_LENGTHMASK);
     SendMessage(wnd, WM_GETTEXT, 64, (LPARAM)msg);
     WideCharToMultiByte(CP_UTF8, 0, msg, -1, sBuf, 64, NULL, NULL);
-    if(!ValidateMask(sBuf, m_pUnits))
+    int iValRes = ValidateMask(sBuf, m_pUnits);
+    if(iValRes != 0)
     {
-        LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+        switch(iValRes)
+        {
+        case 1:
+            LoadString(m_hInstance, IDS_EPRECNEGATIVE, msg, 128);
+            break;
+        case 2:
+            LoadString(m_hInstance, IDS_EPRECTOOLARGE, msg, 128);
+            break;
+        case 3:
+            LoadString(m_hInstance, IDS_EPRECCANNOTPARSE, msg, 128);
+            break;
+        default:
+            LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+        }
+
         LoadString(m_hInstance, IDS_ERRORBASE, buf, 32);
         MessageBox(hWnd, msg, buf, MB_OK | MB_ICONEXCLAMATION);
         SendMessage(wnd, EM_SETSEL, 0, (LPARAM)-1);
@@ -502,9 +517,24 @@ INT_PTR CDFileSetupDlg::OKBtnClick(HWND hWnd)
     wnd = GetDlgItem(hWnd, FSD_EDT_ANGLEMASK);
     SendMessage(wnd, WM_GETTEXT, 64, (LPARAM)msg);
     WideCharToMultiByte(CP_UTF8, 0, msg, -1, sBuf, 64, NULL, NULL);
-    if(!ValidateMask(sBuf, m_pUnits))
+    iValRes = ValidateMask(sBuf, m_pUnits);
+    if(iValRes != 0)
     {
-        LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+        switch(iValRes)
+        {
+        case 1:
+            LoadString(m_hInstance, IDS_EPRECNEGATIVE, msg, 128);
+            break;
+        case 2:
+            LoadString(m_hInstance, IDS_EPRECTOOLARGE, msg, 128);
+            break;
+        case 3:
+            LoadString(m_hInstance, IDS_EPRECCANNOTPARSE, msg, 128);
+            break;
+        default:
+            LoadString(m_hInstance, IDS_EINVALIDMASK, msg, 128);
+        }
+
         LoadString(m_hInstance, IDS_ERRORBASE, buf, 32);
         MessageBox(hWnd, msg, buf, MB_OK | MB_ICONEXCLAMATION);
         SendMessage(wnd, EM_SETSEL, 0, (LPARAM)-1);

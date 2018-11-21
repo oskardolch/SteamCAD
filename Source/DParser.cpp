@@ -422,7 +422,50 @@ PDUnit GetUnitAtBuf(const char *sBuf, PDUnitList pUnits)
     return pRes;
 }
 
-bool ValidateMask(const char *psMask, PDUnitList pUnits)
+int ValidateNumBuf(char *psMask, PDUnit pUnit)
+{
+    int iRes = 0;
+    char *sCol = strchr(psMask, ':');
+
+    if(sCol)
+    {
+        char sNumBuf[8];
+        char *pBuf1 = sCol + 1;
+        int iLen, i;
+
+        bool bFrac = (*pBuf1 == 'f') || (*pBuf1 == 'F');
+
+        if(!bFrac)
+        {
+            iLen = strlen(pBuf1);
+            if(iLen > 7) iLen = 7;
+
+            i = 0;
+            if(*pBuf1 == '-')
+            {
+                sNumBuf[i++] = *pBuf1;
+                pBuf1++;
+            }
+            while((*pBuf1 >= '0') && (*pBuf1 <= '9') && (i < iLen))
+            {
+                sNumBuf[i++] = *pBuf1;
+                pBuf1++;
+            }
+
+            sNumBuf[i] = 0;
+            int iPrec = 0;
+            if(sscanf(sNumBuf, "%d", &iPrec) == 1)
+            {
+                if(iPrec < 0) iRes = 1;
+                if(iPrec > 16) iRes = 2;
+            }
+            else iRes = 3;
+        }
+    }
+    return iRes;
+}
+
+int ValidateMask(const char *psMask, PDUnitList pUnits)
 {
     const char *s1 = psMask;
     const char *s2 = GetEscapeOpening(s1);
@@ -430,16 +473,23 @@ bool ValidateMask(const char *psMask, PDUnitList pUnits)
     if(s2) s3 = GetEscapeClosing(s2 + 1, *s2);
 
     bool bEnd = !(s2 || s3);
-    if(bEnd) return true;
+    if(bEnd) return 0;
 
     bool bValid = s2 && s3;
-    if(!bValid) return false;
+    if(!bValid) return -1;
 
     char cFirstEscape = *s2;
     PDUnit pUnit = GetUnitAtBuf(s2 + 1, pUnits);
-    if(!pUnit) return false;
+    if(!pUnit) return -1;
 
     int iFirstType = pUnit->iUnitType;
+    int iLen = s3 - s2 - 1;
+    if(iLen > 63) iLen = 63;
+    char buf[64];
+    strncpy(buf, s2 + 1, iLen);
+    buf[iLen] = 0;
+    int iRes = ValidateNumBuf(buf, pUnit);
+    if(iRes != 0) bValid = false;
 
     while(bValid && !bEnd)
     {
@@ -456,10 +506,24 @@ bool ValidateMask(const char *psMask, PDUnitList pUnits)
             pUnit = GetUnitAtBuf(s2 + 1, pUnits);
             if(!pUnit) bValid = false;
             else if(pUnit->iUnitType != iFirstType) bValid = false;
+            else
+            {
+                iLen = s3 - s2 - 1;
+                if(iLen > 63) iLen = 63;
+                strncpy(buf, s2 + 1, iLen);
+                buf[iLen] = 0;
+                iRes = ValidateNumBuf(buf, pUnit);
+                if(iRes != 0) bValid = false;
+            }
         }
     }
 
-    return bValid;
+    if(!bValid)
+    {
+        if(iRes == 0) return -1;
+        return iRes;
+    }
+    return 0;
 }
 
 int ParseNumBuf(char *psMask, char *psBuf, double dVal, PDUnit pUnit, double *pdRest)
@@ -515,6 +579,11 @@ int ParseNumBuf(char *psMask, char *psBuf, double dVal, PDUnit pUnit, double *pd
             if(iLen > 7) iLen = 7;
 
             i = 0;
+            if(*pBuf1 == '-')
+            {
+                sNumBuf[i++] = *pBuf1;
+                pBuf1++;
+            }
             while((*pBuf1 >= '0') && (*pBuf1 <= '9') && (i < iLen))
             {
                 sNumBuf[i++] = *pBuf1;
@@ -550,6 +619,7 @@ int ParseNumBuf(char *psMask, char *psBuf, double dVal, PDUnit pUnit, double *pd
             else
             {
                 int iNum;
+
                 double dVal2;
                 *pdRest = 0.0;
                 if(pUnit->iUnitType == 1)

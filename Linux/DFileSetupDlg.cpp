@@ -1168,10 +1168,26 @@ void CDFileSetupDlg::OkBtnClick(GtkButton *button)
     }
 
     const gchar *sBuf = gtk_entry_get_text(GTK_ENTRY(m_pLenMaskEdt));
-    if(!ValidateMask(sBuf, m_pUnits))
+    char sMsgBuf[64];
+    int iValRes = ValidateMask(sBuf, m_pUnits);
+    if(iValRes != 0)
     {
+        switch(iValRes)
+        {
+        case 1:
+            strcpy(sMsgBuf, _("Precision should not be negative"));
+            break;
+        case 2:
+            strcpy(sMsgBuf, _("Precision should not be greater than 16"));
+            break;
+        case 3:
+            strcpy(sMsgBuf, _("Precision value cannot be parsed"));
+            break;
+        default:
+            strcpy(sMsgBuf, _("Invalid mask (unknown reason)"));
+        }
         msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pDlg), GTK_DIALOG_MODAL,
-            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("Invalid mask"));
+            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, sMsgBuf);
         gtk_dialog_run(GTK_DIALOG(msg_dlg));
         gtk_widget_destroy(msg_dlg);
         gtk_widget_grab_focus(m_pLenMaskEdt);
@@ -1180,10 +1196,25 @@ void CDFileSetupDlg::OkBtnClick(GtkButton *button)
     else strcpy(m_cFSR.sLengthMask, sBuf);
 
     sBuf = gtk_entry_get_text(GTK_ENTRY(m_pAngMaskEdt));
-    if(!ValidateMask(sBuf, m_pUnits))
+    iValRes = ValidateMask(sBuf, m_pUnits);
+    if(iValRes != 0)
     {
+        switch(iValRes)
+        {
+        case 1:
+            strcpy(sMsgBuf, _("Precision should not be negative"));
+            break;
+        case 2:
+            strcpy(sMsgBuf, _("Precision should not be greater than 16"));
+            break;
+        case 3:
+            strcpy(sMsgBuf, _("Precision value cannot be parsed"));
+            break;
+        default:
+            strcpy(sMsgBuf, _("Invalid mask (unknown reason)"));
+        }
         msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pDlg), GTK_DIALOG_MODAL,
-            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("Invalid mask"));
+            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, sMsgBuf);
         gtk_dialog_run(GTK_DIALOG(msg_dlg));
         gtk_widget_destroy(msg_dlg);
         gtk_widget_grab_focus(m_pAngMaskEdt);
