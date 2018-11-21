@@ -10,7 +10,7 @@ and does not potentially decrease the performance of SteamCAD, it may be accepte
 Still there are definitively areas where contributions would be highly appreciated, for example:
 
 ## Graphics
-A genuine icon for the application as well as a picture for the dialog box would be welcome. Also
+A genuine icon for the application as well as a picture for the About dialog box would be welcome. Also
 nice drawings created in SteamCAD would be appreciated and added to the samples.
 
 ## Translation
