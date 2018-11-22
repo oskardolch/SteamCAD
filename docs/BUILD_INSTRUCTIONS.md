@@ -15,8 +15,8 @@ $ make main
 ```
 
 # Windows
-Both the provide MS Windows builds were compiled with MinGW64. The tricky part is, that the SteamCAD.exe
-is linked to cairo.dll, which was build from Cairo source code. If you want to build SteamCAd using MinGW,
+Both the provided MS Windows builds were compiled with MinGW64. The tricky part is, that the SteamCAD.exe
+is linked to cairo.dll, which was build from Cairo source code. If you want to build SteamCAD using MinGW,
 you can use the delivered libcairo.dll.a binary file to link it to the delivered cairo.dll library. In this
 case it is just sufficient to create folder Build32 and Build64 under the SteamCAD root folder, copy the
 files cairo.dll and libcairo.dll.a to the corresponding BuildXX folder and issue the commands:
