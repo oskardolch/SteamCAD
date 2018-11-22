@@ -30,7 +30,7 @@ or
 respectively.
 
 If you want to use another compiler, such as the MS' one, you will need to compile the cairo.dll from the
-source code, which involes compiling of other libraries, namely zlib, pixman and libpng. And you may also
+source code, which involves compiling of other libraries, namely zlib, pixman and libpng. And you may also
 need the cairo.def export definition file, which can be found in the cairo folder.
 
 # Manual
