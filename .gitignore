@@ -1,0 +1,9 @@
+Source/*.o
+Linux/*.o
+Manual/*.aux
+Manual/*.dvi
+Manual/*.idx
+Manual/*.log
+Manual/*.toc
+Manual/Source/*.aux
+
