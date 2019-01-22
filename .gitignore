@@ -13,6 +13,7 @@ autom4te.cache
 Build
 dxflib/.deps
 dxflib/Makefile
+dxflib/*.o
 dxflib/*.a
 Images/Makefile
 Images/steamcad.desktop
@@ -24,6 +25,7 @@ Linux/config.h
 !Linux/config.h.in
 Linux/Makefile
 Linux/*.o
+Linux/SteamCAD
 Manual/*.aux
 Manual/*.dvi
 Manual/*.idx
