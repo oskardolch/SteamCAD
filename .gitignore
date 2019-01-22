@@ -2,6 +2,7 @@
 
 autobuild
 config.*
+!config.sub
 depcomp
 install-sh
 Makefile
