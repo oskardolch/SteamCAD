@@ -21,6 +21,7 @@ Images/steamcad_old.png
 Linux/po
 Linux/.deps
 Linux/config.h
+!Linux/config.h.in
 Linux/Makefile
 Linux/*.o
 Manual/*.aux
