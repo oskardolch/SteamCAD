@@ -5,6 +5,7 @@ config.*
 !config.sub
 !config.guess
 !config.rpath
+install-sh
 Makefile
 log
 autom4te.cache

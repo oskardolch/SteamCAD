@@ -108,7 +108,10 @@ void CDApplication::CopyIniFiles(const char *psConfDir)
 	gchar *sFile1, *sFile2;
     GFile *gf1, *gf2;
 
-    sFile1 = g_strconcat(homedir, "/.SteamCAD/DPapers.ini", NULL);
+    gchar *cnfdir = g_strconcat(homedir, "/.SteamCAD", NULL);
+    g_mkdir(cnfdir, S_IRWXU | S_IRWXG);
+
+    sFile1 = g_strconcat(cnfdir, "/DPapers.ini", NULL);
     gf1 = g_file_new_for_path((const char *)sFile1);
     if(!g_file_query_exists(gf1, NULL))
     {
@@ -124,7 +127,7 @@ void CDApplication::CopyIniFiles(const char *psConfDir)
     g_object_unref(gf1);
     g_free(sFile1);
 
-	sFile1 = g_strconcat(homedir, "/.SteamCAD/DUnits.ini", NULL);
+	sFile1 = g_strconcat(cnfdir, "/DUnits.ini", NULL);
     gf1 = g_file_new_for_path((const char *)sFile1);
     if(!g_file_query_exists(gf1, NULL))
     {
@@ -139,6 +142,8 @@ void CDApplication::CopyIniFiles(const char *psConfDir)
     }
     g_object_unref(gf1);
     g_free(sFile1);
+
+    g_free(cnfdir);
 }
 
 CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
