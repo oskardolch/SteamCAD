@@ -1,8 +1,17 @@
-# Linux
-Until the autoconf is implemented for this project (which may happen in the future), the compilation
-must be done manually. Which means to check the prerequisites and issue the `make` command. There is no
-`make install` at the moment, which means that the user should copy the executable file wherever he/she
-wants and run it from that location. Also follow the more detailed instrcutions in the pdf manual.
+# Linux Automated
+The project should support the GNU automated build now. So running:
+```
+$ sudo apt-get install gcc libcairo2-dev gtk+-dev
+$ git clone https://github.com/oskardolch/SteamCAD.git
+$ cd SteamCAD
+$ ./configure
+$ make
+$ sudo make install
+```
+should install the software, including the start menu launcher.
+
+# Linux Manual
+It still possible to compile the software without GNU build utilities.
 
 Typical steps on a Debian based systems would be as follows:
 ```
@@ -13,6 +22,7 @@ $ mkdir Build
 $ make -fmakefile.gcc libdxflib.a
 $ make -fmakefile.gcc main
 ```
+Also follow the more detailed instrcutions in the pdf manual.
 
 # Windows
 Both the provided MS Windows builds were compiled with MinGW64. The tricky part is, that the SteamCAD.exe
