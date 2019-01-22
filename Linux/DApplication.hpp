@@ -144,9 +144,10 @@ private:
     gboolean GetUpdateRegion(PDPtrList pPolygons, GdkRectangle *pRect);
     void DrawSizeRectClip(cairo_t *cr, double x, double y);
 
-    void StartNewObject();    
+    void StartNewObject();
+    void CopyIniFiles(const char *psConfDir);
 public:	
-    CDApplication(const char *psAppPath);
+    CDApplication(const char *psConfDir, const char *psAppPath);
     ~CDApplication();
     GtkWidget* GetMainWindow();
     void SetPosition(gint iLeft, gint iTop, gint iWidth, gint iHeight, GdkGravity iGrav);

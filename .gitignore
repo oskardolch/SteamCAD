@@ -1,4 +1,25 @@
-Source/*.o
+# run "git clean -ndX" to see what filed are actually ignored
+
+autobuild
+config.*
+depcomp
+install-sh
+Makefile
+missing
+log
+autom4te.cache
+Build
+dxflib/.deps
+dxflib/Makefile
+dxflib/*.a
+Images/Makefile
+Images/steamcad.desktop
+Images/SteamCAD_ico.png
+Images/steamcad_old.png
+Linux/po
+Linux/.deps
+Linux/config.h
+Linux/Makefile
 Linux/*.o
 Manual/*.aux
 Manual/*.dvi
@@ -6,4 +27,9 @@ Manual/*.idx
 Manual/*.log
 Manual/*.toc
 Manual/Source/*.aux
-
+Papers/Makefile
+po/Makefile
+Source/.deps
+Source/*.o
+Source/*.a
+Source/Makefile

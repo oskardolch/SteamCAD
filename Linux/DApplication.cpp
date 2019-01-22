@@ -101,8 +101,50 @@ void app_disable_snap_mnu(GtkMenuItem *menuitem, PDApplication pApp)
 }
 
 
-CDApplication::CDApplication(const char *psAppPath)
+void CDApplication::CopyIniFiles(const char *psConfDir)
 {
+	const gchar *homedir = g_get_home_dir();
+
+	gchar *sFile1, *sFile2;
+    GFile *gf1, *gf2;
+
+    sFile1 = g_strconcat(homedir, "/.SteamCAD/DPapers.ini", NULL);
+    gf1 = g_file_new_for_path((const char *)sFile1);
+    if(!g_file_query_exists(gf1, NULL))
+    {
+    	sFile2 = g_strconcat(psConfDir, "/DPapers.ini", NULL);
+        gf2 = g_file_new_for_path((const char *)sFile2);
+        if(g_file_query_exists(gf2, NULL))
+        {
+            g_file_copy(gf2, gf1, G_FILE_COPY_TARGET_DEFAULT_PERMS, NULL, NULL, NULL, NULL);
+        }
+        g_object_unref(gf2);
+        g_free(sFile2);
+    }
+    g_object_unref(gf1);
+    g_free(sFile1);
+
+	sFile1 = g_strconcat(homedir, "/.SteamCAD/DUnits.ini", NULL);
+    gf1 = g_file_new_for_path((const char *)sFile1);
+    if(!g_file_query_exists(gf1, NULL))
+    {
+    	sFile2 = g_strconcat(psConfDir, "/DUnits.ini", NULL);
+        gf2 = g_file_new_for_path((const char *)sFile2);
+        if(g_file_query_exists(gf2, NULL))
+        {
+            g_file_copy(gf2, gf1, G_FILE_COPY_TARGET_DEFAULT_PERMS, NULL, NULL, NULL, NULL);
+        }
+        g_object_unref(gf2);
+        g_free(sFile2);
+    }
+    g_object_unref(gf1);
+    g_free(sFile1);
+}
+
+CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
+{
+    if(psConfDir) CopyIniFiles(psConfDir);
+
     strcpy(m_sAppPath, psAppPath);
 	
     m_bSettingProps = false;
@@ -301,6 +343,13 @@ CDApplication::CDApplication(const char *psAppPath)
     m_pDrawObjects->SetFileAttrs(&cFAttrs, true);
 
     SetTitle(m_pMainWnd, true);
+
+    if(psConfDir)
+    {
+        gchar *sIcon = g_strconcat(psConfDir, "/steamcad.png", NULL);
+        gtk_window_set_icon_from_file(GTK_WINDOW(m_pMainWnd), (const gchar*)sIcon, NULL);
+        g_free(sIcon);
+    }
 
     /* always display the window as the last step so it all splashes on
     * the screen at once. */

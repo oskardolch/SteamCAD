@@ -10,8 +10,8 @@ $ sudo apt-get install gcc libcairo2-dev gtk+-dev
 $ git clone https://github.com/oskardolch/SteamCAD.git
 $ cd SteamCAD
 $ mkdir Build
-$ make libdxflib.a
-$ make main
+$ make -fmakefile.gcc libdxflib.a
+$ make -fmakefile.gcc main
 ```
 
 # Windows
