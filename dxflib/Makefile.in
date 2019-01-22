@@ -212,7 +212,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign
 noinst_LIBRARIES = libdxflib.a
 libdxflib_a_SOURCES = dl_writer_ascii.cpp dl_writer_ascii.h dl_dxf.cpp dl_dxf.h
 all: all-am
@@ -228,9 +227,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign dxflib/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu dxflib/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign dxflib/Makefile
+	  $(AUTOMAKE) --gnu dxflib/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

@@ -144,7 +144,7 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
-CPPFLAGS = $(GTK_CFLAGS)
+CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -255,8 +255,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign
 SUBDIRS = ../dxflib
+AM_CPPFLAGS = $(GTK_CFLAGS)
 libSteamCAD_core_a_LIBADD = ../dxflib/libdxflib.a
 noinst_LIBRARIES = libSteamCAD_core.a
 libSteamCAD_core_a_SOURCES = DDataTypes.cpp DDataTypes.hpp DMath.cpp DMath.hpp \
@@ -281,9 +281,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign Source/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu Source/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign Source/Makefile
+	  $(AUTOMAKE) --gnu Source/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

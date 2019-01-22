@@ -145,7 +145,7 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -O2
 CPP = @CPP@
-CPPFLAGS = $(GTK_CFLAGS)
+CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -170,7 +170,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
 INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
-LDFLAGS = $(GTK_LIBS)
+LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
 LIBOBJS = @LIBOBJS@
@@ -256,10 +256,10 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = foreign
 SUBDIRS = ../Source
+AM_CPPFLAGS = $(GTK_CFLAGS) -DLOCALEDIR='"$(localedir)"' -DCONFDIR=\"$(sysconfdir)/@PACKAGE@\"
+AM_LDFLAGS = $(GTK_LIBS)
 SteamCAD_LDADD = ../Source/libSteamCAD_core.a ../dxflib/libdxflib.a
-AM_CPPFLAGS = -DLOCALEDIR='"$(localedir)"' -DCONFDIR=\"$(sysconfdir)/@PACKAGE@\"
 SteamCAD_SOURCES = SteamCAD.cpp DApplication.cpp DApplication.hpp DLxBaseDefs.h \
     DSnapDlg.hpp DScaleDlg.hpp DMenu.cpp DMenu.hpp \
     DFileMenu.cpp DFileMenu.hpp DModeMenu.cpp DModeMenu.hpp \
@@ -282,9 +282,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign Linux/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu Linux/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign Linux/Makefile
+	  $(AUTOMAKE) --gnu Linux/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

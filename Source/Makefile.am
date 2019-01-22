@@ -1,8 +1,6 @@
-AUTOMAKE_OPTIONS = foreign
-
 SUBDIRS = ../dxflib
 
-CPPFLAGS = $(GTK_CFLAGS)
+AM_CPPFLAGS = $(GTK_CFLAGS)
 
 libSteamCAD_core_a_LIBADD = ../dxflib/libdxflib.a
 
