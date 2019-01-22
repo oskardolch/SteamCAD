@@ -3,6 +3,7 @@
 autobuild
 config.*
 !config.sub
+!config.guess
 depcomp
 install-sh
 Makefile
