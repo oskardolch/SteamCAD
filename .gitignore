@@ -4,8 +4,8 @@ autobuild
 config.*
 !config.sub
 !config.guess
+!config.rpath
 depcomp
-install-sh
 Makefile
 missing
 log
