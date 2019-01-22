@@ -8,8 +8,8 @@ install:
 
 script:
   - mkdir Build
-  - make libdxflib.a -j$(nproc)
-  - make main -j$(nproc)
+  - make -fmakefile.gcc libdxflib.a -j$(nproc)
+  - make -fmakefile.gcc main -j$(nproc)
   - mkdir -p appdir/usr/bin ; mkdir -p appdir/usr/share/applications ; mkdir -p appdir/usr/share/steamcad # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
   - cp Linux/steamcad.desktop appdir/usr/share/applications/ ; cp Build/SteamCAD Linux/steamcad appdir/usr/bin/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
   - chmod +x appdir/usr/bin/* # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
