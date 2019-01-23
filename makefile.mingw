@@ -43,14 +43,18 @@ dxflibmod = $(addprefix $(BUILDDIR)/, $(dxflibobj))
 libdxflib.a: $(dxflibobj)
 	@$(AR) $(ARFLAGS) $(BUILDDIR)/$@ $(dxflibmod)
 
-# Template command for compiling .cpp to .o
-%.o : Source/%.cpp
+# Template command for compiling dxflib
+%.o : dxflib/%.cpp
 	$(CC) $(CFLAGS) $< -o $(BUILDDIR)/$@
 
 # dxflib sources
 dl_dxf.o : dxflib/dl_dxf.cpp dxflib/dl_dxf.h
 dl_writer_ascii.o : dxflib/dl_writer_ascii.cpp dxflib/dl_writer_ascii.h
 
+
+# Template command for compiling .cpp to .o
+%.o : Source/%.cpp
+	$(CC) $(CFLAGS) $< -o $(BUILDDIR)/$@
 
 # SteamCAD sources
 DDataTypes.o : Source/DDataTypes.cpp Source/DDataTypes.hpp Source/DTopo.hpp \
