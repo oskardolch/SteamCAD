@@ -26,7 +26,7 @@ Drawobj = SteamCAD.o MainWnd.o SteamCAD_res.o DDataTypes.o XMLUtils.o \
 	DFileSetupDlg.o DMath.o DTopo.o DDrawTypes.o DLine.o DCircle.o \
 	DEllipse.o DPrimitive.o DArcElps.o DHyper.o DParabola.o DSpline.o \
 	DEvolv.o DLineStyleDlg.o DDimEditDlg.o DExpCairo.o DScaleDlg.o \
-	DStatDlg.o DParser.o DSnapDlg.o
+	DStatDlg.o DParser.o DSnapDlg.o DExpDXF.o
 #	DToolBar.o
 Drawmod = $(addprefix $(BUILDDIR)/, $(Drawobj)) \
 	-lgdi32 -lcomctl32 -lole32 -loleaut32 -luuid -lcairo.dll -ldxflib
@@ -86,6 +86,9 @@ DEvolv.o : Source/DEvolv.cpp Source/DEvolv.hpp Source/DDataTypes.hpp \
 DExpCairo.o : Source/DExpCairo.cpp Source/DExpCairo.hpp Source/DDataTypes.hpp \
 	Source/DDrawTypes.hpp Source/DPrimitive.hpp Source/DParser.hpp
 DParser.o : Source/DParser.cpp Source/DParser.hpp Source/DMath.hpp Source/DDataTypes.hpp
+DExpDXF.o : Source/DExpDXF.cpp Source/DExpDXF.hpp Source/DDataTypes.hpp \
+	Source/DDrawTypes.hpp Source/DPrimitive.hpp Source/DParser.hpp
+
 
 # Template command for compiling .cpp to .o
 %.o : Win32/%.cpp

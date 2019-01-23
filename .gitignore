@@ -10,6 +10,8 @@ Makefile
 libdxflib.log
 log
 SteamCAD.log
+SteamCAD.layout
+SteamCAD.cbp
 autom4te.cache
 Build
 Build32
