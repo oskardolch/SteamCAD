@@ -10,6 +10,7 @@ DL=$(TOOLPFX)dlltool
 AR=$(TOOLPFX)ar
 
 CAIROINC=..\Cairo\cairo-1.14.8\src
+DXFINC=.\dxflib
 
 VPATH=C:/MinGW32/Lib;./$(BUILDDIR)
 
@@ -19,7 +20,7 @@ CFLAGS=-c -O2 -DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x0600 -I$(
 # oleaut32 defines CoCreateInstance
 # uuid defines GUID_NULL
 
-# SteamDraw
+# SteamCAD
 
 Drawobj = SteamCAD.o MainWnd.o SteamCAD_res.o DDataTypes.o XMLUtils.o \
 	DFileSetupDlg.o DMath.o DTopo.o DDrawTypes.o DLine.o DCircle.o \
@@ -34,11 +35,24 @@ SteamCAD : $(Drawobj)
 	$(CP) -s -L./$(BUILDDIR) -o $(BUILDDIR)/SteamCAD.exe $(Drawmod) \
 	-static-libgcc -static-libstdc++ -mwindows
 
+# dxflib
+
+dxflibobj = dl_dxf.o dl_writer_ascii.o
+dxflibmod = $(addprefix $(BUILDDIR)/, $(dxflibobj))
+
+libdxflib.a: $(dxflibobj)
+	@$(AR) $(ARFLAGS) $(BUILDDIR)/$@ $(dxflibmod)
+
 # Template command for compiling .cpp to .o
 %.o : Source/%.cpp
 	$(CC) $(CFLAGS) $< -o $(BUILDDIR)/$@
 
-# SteamDraw sources
+# dxflib sources
+dl_dxf.o : dxflib/dl_dxf.cpp dxflib/dl_dxf.h
+dl_writer_ascii.o : dxflib/dl_writer_ascii.cpp dxflib/dl_writer_ascii.h
+
+
+# SteamCAD sources
 DDataTypes.o : Source/DDataTypes.cpp Source/DDataTypes.hpp Source/DTopo.hpp \
 	Source/DMath.hpp
 DMath.o : Source/DMath.cpp Source/DMath.hpp

@@ -7,9 +7,13 @@ config.*
 !config.rpath
 install-sh
 Makefile
+libdxflib.log
 log
+SteamCAD.log
 autom4te.cache
 Build
+Build32
+Build64
 dxflib/.deps
 dxflib/Makefile
 dxflib/*.o
