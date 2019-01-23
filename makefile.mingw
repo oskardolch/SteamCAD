@@ -29,7 +29,7 @@ Drawobj = SteamCAD.o MainWnd.o SteamCAD_res.o DDataTypes.o XMLUtils.o \
 	DStatDlg.o DParser.o DSnapDlg.o
 #	DToolBar.o
 Drawmod = $(addprefix $(BUILDDIR)/, $(Drawobj)) \
-	-lgdi32 -lcomctl32 -lole32 -loleaut32 -luuid -lcairo.dll
+	-lgdi32 -lcomctl32 -lole32 -loleaut32 -luuid -lcairo.dll -ldxflib
 
 SteamCAD : $(Drawobj)
 	$(CP) -s -L./$(BUILDDIR) -o $(BUILDDIR)/SteamCAD.exe $(Drawmod) \
