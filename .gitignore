@@ -5,7 +5,6 @@ config.*
 !config.sub
 !config.guess
 !config.rpath
-install-sh
 Makefile
 libdxflib.log
 log
