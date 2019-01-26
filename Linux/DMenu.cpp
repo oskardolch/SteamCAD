@@ -49,7 +49,7 @@ GtkWidget* GetMenuGroup(GtkWidget *pMenuBar, char *sName)
     return;
 }*/
 
-GtkAccelGroup* InitMenu(GtkWidget *wBox, void *pPtr)
+GtkAccelGroup* InitMenu(GtkWidget *wBox, GtkAccelGroup *pAccelGroup, void *pPtr)
 {
     //PDApplication pApp = (PDApplication)pPtr;
 
@@ -65,11 +65,11 @@ GtkAccelGroup* InitMenu(GtkWidget *wBox, void *pPtr)
     GtkWidget *stat_bar = gtk_statusbar_new();
     gtk_box_pack_end(GTK_BOX(wBox), stat_bar, FALSE, FALSE, 0);
 
-    CreateFileMenu(pPtr, GTK_MENU_SHELL(menu_bar), acg);
-    CreateModeMenu(pPtr, GTK_MENU_SHELL(menu_bar), acg);
-    CreateEditMenu(pPtr, GTK_MENU_SHELL(menu_bar), acg);
-    CreateViewMenu(pPtr, GTK_MENU_SHELL(menu_bar), acg);
-    CreateToolsMenu(pPtr, GTK_MENU_SHELL(menu_bar), acg);
+    CreateFileMenu(pPtr, GTK_MENU_SHELL(menu_bar), pAccelGroup);
+    CreateModeMenu(pPtr, GTK_MENU_SHELL(menu_bar), pAccelGroup, acg);
+    CreateEditMenu(pPtr, GTK_MENU_SHELL(menu_bar), pAccelGroup, acg);
+    CreateViewMenu(pPtr, GTK_MENU_SHELL(menu_bar), pAccelGroup);
+    CreateToolsMenu(pPtr, GTK_MENU_SHELL(menu_bar), pAccelGroup);
 
     gtk_widget_show(menu_bar);
     gtk_widget_show(stat_bar);

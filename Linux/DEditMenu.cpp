@@ -124,7 +124,7 @@ static void edit_redo_accel(PDApplication pApp)
     return;
 }
 
-void CreateEditMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
+void CreateEditMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel, GtkAccelGroup *pEscAccel)
 {
     PDApplication pApp = (PDApplication)pPtr;
 
@@ -138,7 +138,7 @@ void CreateEditMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
     gtk_accel_group_connect(pAccel, GDK_KEY_Delete, (GdkModifierType)0, GTK_ACCEL_MASK, pClos);
 	
     pClos = g_cclosure_new_swap(G_CALLBACK(edit_return_accel), pApp, NULL);
-    gtk_accel_group_connect(pAccel, GDK_KEY_Return, (GdkModifierType)0, GTK_ACCEL_MASK, pClos);
+    gtk_accel_group_connect(pEscAccel, GDK_KEY_Return, (GdkModifierType)0, GTK_ACCEL_MASK, pClos);
 	
     menu_item = gtk_menu_item_new_with_mnemonic(_("_Copy paralel"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);

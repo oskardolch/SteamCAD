@@ -5,7 +5,7 @@ AC_PREREQ([2.62])
 AC_INIT([SteamCAD], [1.1], [pavel@pamsoft.cz])
 AC_CONFIG_HEADERS([Linux/config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.18.1])
 
@@ -30,5 +30,5 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([floor memmove setlocale sqrt strcasecmp strchr strrchr strtol])
 
-AC_CONFIG_FILES([Makefile dxflib/Makefile Source/Makefile Linux/Makefile po/Makefile Papers/Makefile Images/steamcad.desktop Images/Makefile])
+AC_CONFIG_FILES([Makefile po/Makefile Papers/Makefile Images/steamcad.desktop Images/Makefile])
 AC_OUTPUT

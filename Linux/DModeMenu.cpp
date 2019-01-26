@@ -124,7 +124,7 @@ static void mode_dimen_accel(PDApplication pApp)
     return;
 }
 
-void CreateModeMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
+void CreateModeMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel, GtkAccelGroup *pEscAccel)
 {
     PDApplication pApp = (PDApplication)pPtr;
 
@@ -139,7 +139,7 @@ void CreateModeMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), TRUE);
 
     pClos = g_cclosure_new_swap(G_CALLBACK(mode_sel_accel), pApp, NULL);
-    gtk_accel_group_connect(pAccel, GDK_KEY_Escape, (GdkModifierType)0, GTK_ACCEL_MASK, pClos);
+    gtk_accel_group_connect(pEscAccel, GDK_KEY_Escape, (GdkModifierType)0, GTK_ACCEL_MASK, pClos);
     menu_label = gtk_bin_get_child(GTK_BIN(menu_item));
     gtk_accel_label_set_accel_closure(GTK_ACCEL_LABEL(menu_label), pClos);
     g_signal_connect_swapped(G_OBJECT(menu_item), "activate", G_CALLBACK(mode_sel_click), pApp);

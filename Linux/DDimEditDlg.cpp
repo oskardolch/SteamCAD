@@ -384,7 +384,7 @@ void CDDimEditDlg::OKBtnClick(GtkButton *button)
             strcpy(sMsgBuf, _("Invalid mask (unknown reason)"));
         }
         GtkWidget *msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pDlg), GTK_DIALOG_MODAL,
-            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, sMsgBuf);
+            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, "%s", sMsgBuf);
         gtk_dialog_run(GTK_DIALOG(msg_dlg));
         gtk_widget_destroy(msg_dlg);
         gtk_widget_grab_focus(m_pTextEdt);

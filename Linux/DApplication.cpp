@@ -178,9 +178,11 @@ CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
     gtk_container_add(GTK_CONTAINER(m_pMainWnd), vbox);
     gtk_widget_show(vbox);
 
-    GtkAccelGroup *pAccelGroup = InitMenu(vbox, this);
+    m_pAccelGroup = gtk_accel_group_new();
+    GtkAccelGroup *pAccelGroup = InitMenu(vbox, m_pAccelGroup, this);
 	
     gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), pAccelGroup);
+    gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
 
     GtkWidget *draw = gtk_drawing_area_new();
     gtk_box_pack_start(GTK_BOX(vbox), draw, TRUE, TRUE, 0);
@@ -2087,11 +2089,15 @@ void CDApplication::DrawCross(cairo_t *cr)
     cairo_restore(cr);
 }
 
-void CDApplication::StartNewObject()
+void CDApplication::StartNewObject(gboolean bShowEdit)
 {
-    gtk_widget_hide(m_pStatEdt1);
-    gtk_widget_hide(m_pStatLab2);
-    gtk_widget_hide(m_pStatEdt2);
+    if(gtk_widget_get_visible(m_pStatEdt1))
+    {
+        gtk_widget_hide(m_pStatEdt1);
+        gtk_widget_hide(m_pStatLab2);
+        gtk_widget_hide(m_pStatEdt2);
+        gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+    }
 
     m_pActiveObject = NULL;
     m_iRestrictSet = -1;
@@ -2127,16 +2133,30 @@ void CDApplication::StartNewObject()
     case 1:
         strcpy(m_sStatus2Base, _("Angle: "));
         m_pActiveObject = new CDObject(1, m_cFSR.dDefLineWidth);
-        gtk_widget_show(m_pStatEdt1);
-        gtk_widget_grab_focus(m_pStatEdt1);
+        if(bShowEdit)
+        {
+            if(!gtk_widget_get_visible(m_pStatEdt1))
+            {
+                gtk_widget_show(m_pStatEdt1);
+                gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+            }
+            gtk_widget_grab_focus(m_pStatEdt1);
+        }
         break;
     case 2:
         strcpy(m_sStatus2Base, _("Radius: "));
         m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
         if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         //if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
-        gtk_widget_show(m_pStatEdt1);
-        gtk_widget_grab_focus(m_pStatEdt1);
+        if(bShowEdit)
+        {
+            if(!gtk_widget_get_visible(m_pStatEdt1))
+            {
+                gtk_widget_show(m_pStatEdt1);
+                gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+            }
+            gtk_widget_grab_focus(m_pStatEdt1);
+        }
         break;
     case 3:
         m_pActiveObject = new CDObject(3, m_cFSR.dDefLineWidth);
@@ -2224,7 +2244,11 @@ void CDApplication::StartNewObject()
         {
             m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
             strcpy(m_sStatus2Base, _("Radius: "));
-            gtk_widget_show(m_pStatEdt1);
+            if(!gtk_widget_get_visible(m_pStatEdt1))
+            {
+                gtk_widget_show(m_pStatEdt1);
+                gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+            }
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         else
@@ -2246,8 +2270,12 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
 {
     if(m_bSettingProps) return;
 
-    gtk_widget_hide(m_pStatEdt1);
-    gtk_widget_hide(m_pStatEdt2);
+    if(gtk_widget_get_visible(m_pStatEdt1))
+    {
+        gtk_widget_hide(m_pStatEdt1);
+        gtk_widget_hide(m_pStatEdt2);
+        gtk_window_add_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+    }
 
     if(m_pActiveObject)
     {
@@ -2268,7 +2296,7 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
     int iCurMode = m_iDrawMode;
     m_iDrawMode = iNewMode;
 
-    StartNewObject();
+    StartNewObject(FALSE);
     if(!m_pActiveObject && (m_iDrawMode > 0)) m_iDrawMode = 0;
 
     if(m_iDrawMode > 0) DrawCross(cr);
@@ -2287,6 +2315,26 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), TRUE);
 
     m_bSettingProps = false;
+
+    switch(m_iDrawMode)
+    {
+    case 1:
+        if(!gtk_widget_get_visible(m_pStatEdt1))
+        {
+            gtk_widget_show(m_pStatEdt1);
+            gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+        }
+        gtk_widget_grab_focus(m_pStatEdt1);
+        break;
+    case 2:
+        if(!gtk_widget_get_visible(m_pStatEdt1))
+        {
+            gtk_widget_show(m_pStatEdt1);
+            gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+        }
+        gtk_widget_grab_focus(m_pStatEdt1);
+        break;
+    }
 }
 
 void CDApplication::SetTool(int iNewTool)
@@ -2320,60 +2368,13 @@ void CDApplication::SetTool(int iNewTool)
     m_iToolMode = iNewTool;
     m_iDrawMode = 0;
 
-    StartNewObject();
+    StartNewObject(TRUE);
 }
 
 void CDApplication::ModeCommand(int iCmd, bool bFromAccel)
 {
+    if(m_bSettingProps) return;
     int iNewMode = iCmd - IDM_MODESELECT;
-
-    if(bFromAccel && (iNewMode > 0) && (gtk_widget_get_visible(m_pStatEdt1) || gtk_widget_get_visible(m_pStatEdt2)))
-    {
-        GdkEvent *event;
-        char c = 0;
-        switch(iNewMode)
-        {
-        case 1:
-            c = 'l';
-            break;
-        case 2:
-            c = 'c';
-            break;
-        case 3:
-            c = 'e';
-            break;
-        case 4:
-            c = 'a';
-            break;
-        case 5:
-            c = 'h';
-            break;
-        case 6:
-            c = 'p';
-            break;
-        case 7:
-            c = 's';
-            break;
-        case 8:
-            c = 'v';
-            break;
-        }
-        if(gtk_widget_has_focus(m_pStatEdt1))
-        {
-            event = gdk_event_new(GDK_KEY_PRESS);
-            event->key.window = (GdkWindow*)g_object_ref(m_pStatEdt1->window);
-            event->key.keyval = c;
-            gdk_event_put(event);
-        }
-        else if(gtk_widget_has_focus(m_pStatEdt2))
-        {
-            event = gdk_event_new(GDK_KEY_PRESS);
-            event->key.window = (GdkWindow*)g_object_ref(m_pStatEdt2->window);
-            event->key.keyval = c;
-            gdk_event_put(event);
-        }
-        return;
-    }
 
     if(iCmd == IDM_MODEDIMEN) SetTool(5);
     else SetMode(iNewMode, bFromAccel);
@@ -2383,20 +2384,6 @@ void CDApplication::ModeCommand(int iCmd, bool bFromAccel)
 
 void CDApplication::EditDeleteCmd(GtkWidget *widget, bool bFromAccel)
 {
-    if(bFromAccel && (m_iDrawMode + m_iToolMode > 0) && (gtk_widget_get_visible(m_pStatEdt1) || gtk_widget_get_visible(m_pStatEdt2)))
-    {
-        if(gtk_widget_has_focus(m_pStatEdt1))
-        {
-            gtk_editable_delete_selection(GTK_EDITABLE(m_pStatEdt1));
-        }
-        else if(gtk_widget_has_focus(m_pStatEdt2))
-        {
-            gtk_editable_delete_selection(GTK_EDITABLE(m_pStatEdt2));
-        }
-
-        return;
-    }
-
     m_pActiveObject = NULL;
     m_pHighObject = NULL;
 
@@ -2428,20 +2415,6 @@ void CDApplication::EditDeleteCmd(GtkWidget *widget, bool bFromAccel)
 
 void CDApplication::EditCopyParCmd(GtkWidget *widget, bool bFromAccel)
 {
-    if(bFromAccel && (m_iDrawMode + m_iToolMode > 0) && (gtk_widget_get_visible(m_pStatEdt1) || gtk_widget_get_visible(m_pStatEdt2)))
-    {
-        if(gtk_widget_has_focus(m_pStatEdt1))
-        {
-            gtk_editable_copy_clipboard(GTK_EDITABLE(m_pStatEdt1));
-        }
-        else if(gtk_widget_has_focus(m_pStatEdt2))
-        {
-            gtk_editable_copy_clipboard(GTK_EDITABLE(m_pStatEdt2));
-        }
-
-        return;
-    }
-
     int iSel = m_pDrawObjects->GetSelectCount();
     if(iSel != 1) return;
 
@@ -2458,7 +2431,11 @@ void CDApplication::EditCopyParCmd(GtkWidget *widget, bool bFromAccel)
     strcpy(m_sStatus2Msg, m_sStatus2Base);
     SetStatusBarMsg(1, m_sStatus2Msg);
 
-    gtk_widget_show(m_pStatEdt1);
+    if(!gtk_widget_get_visible(m_pStatEdt1))
+    {
+        gtk_widget_show(m_pStatEdt1);
+        gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+    }
     gtk_widget_grab_focus(m_pStatEdt1);
     return;
 }
@@ -2467,7 +2444,11 @@ void CDApplication::EditMoveCmd(GtkWidget *widget)
 {
     strcpy(m_sStatus2Base, _("Distance: "));
     SetStatusBarMsg(1, m_sStatus2Base);
-    gtk_widget_show(m_pStatEdt1);
+    if(!gtk_widget_get_visible(m_pStatEdt1))
+    {
+        gtk_widget_show(m_pStatEdt1);
+        gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+    }
     gtk_widget_show(m_pStatLab2);
     gtk_widget_show(m_pStatEdt2);
 
@@ -2488,7 +2469,11 @@ void CDApplication::EditRotateCmd(GtkWidget *widget)
 {
     strcpy(m_sStatus2Base, _("Angle: "));
     SetStatusBarMsg(1, m_sStatus2Base);
-    gtk_widget_show(m_pStatEdt1);
+    if(!gtk_widget_get_visible(m_pStatEdt1))
+    {
+        gtk_widget_show(m_pStatEdt1);
+        gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+    }
     gtk_widget_show(m_pStatLab2);
     gtk_widget_show(m_pStatEdt2);
 
@@ -3577,7 +3562,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                         if(GetUpdateRegion(pRegions, &cRect))
                             gdk_window_invalidate_rect(event->window, &cRect, FALSE);
                         SetTitle(m_pMainWnd, false);
-                        StartNewObject();
+                        StartNewObject(TRUE);
                     }
                 }
                 m_iToolMode = 0;
@@ -3599,7 +3584,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                             if(GetUpdateRegion(pRegions, &cRect))
                                 gdk_window_invalidate_rect(event->window, &cRect, FALSE);
                             SetTitle(m_pMainWnd, false);
-                            StartNewObject();
+                            StartNewObject(TRUE);
                         }
                     }
                 }
@@ -3626,7 +3611,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                     if(GetUpdateRegion(pRegions, &cRect))
                         gdk_window_invalidate_rect(event->window, &cRect, FALSE);
                     SetTitle(m_pMainWnd, false);
-                    StartNewObject();
+                    StartNewObject(TRUE);
                 }
             }
             else if(m_cMeasPoint2.bIsSet)
@@ -3647,7 +3632,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                         if(GetUpdateRegion(pRegions, &cRect))
                             gdk_window_invalidate_rect(event->window, &cRect, FALSE);
                         SetTitle(m_pMainWnd, false);
-                        StartNewObject();
+                        StartNewObject(TRUE);
                     }
                 }
             }
@@ -3679,7 +3664,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                     if(GetUpdateRegion(pRegions, &cRect))
                         gdk_window_invalidate_rect(event->window, &cRect, FALSE);
                     SetTitle(m_pMainWnd, false);
-                    StartNewObject();
+                    StartNewObject(TRUE);
                 }
             }
         }
@@ -3722,7 +3707,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                 bUpdate = TRUE;
                 if(GetUpdateRegion(pRegions, &cRect))
                     gdk_window_invalidate_rect(event->window, &cRect, FALSE);
-                StartNewObject();
+                StartNewObject(TRUE);
             }
         }
     }
@@ -3867,7 +3852,7 @@ void CDApplication::MouseRButtonUp(GtkWidget *widget, GdkEventButton *event)
             bUpdate = TRUE;
             if(GetUpdateRegion(pRegions, &cRect))
                 gdk_window_invalidate_rect(event->window, &cRect, FALSE);
-            StartNewObject();
+            StartNewObject(TRUE);
         }
     }
 
@@ -3915,7 +3900,7 @@ void CDApplication::MouseLDblClick(GtkWidget *widget, GdkEventButton *event)
 
                 ClearPolygonList(pRegions);
                 delete pRegions;
-                StartNewObject();
+                StartNewObject(TRUE);
             }
         }
     }
@@ -3931,11 +3916,17 @@ void CDApplication::Edit1Changed(GtkEntry *entry)
 {
     const gchar *sBuf = gtk_entry_get_text(entry);
 
+    // Ugly hack for Ubuntu
+    if((strcmp(sBuf, "l") == 0) || (strcmp(sBuf, "c") == 0))
+    {
+        gtk_entry_set_text(entry, "");
+        return;
+    }
+
     int iOldRest = m_iRestrictSet;
 
     m_iRestrictSet = ParseInputString((char*)sBuf, m_pFileSetupDlg->GetUnitList(), &m_dRestrictValue);
 
-    //WMMouseMove(hwnd, 0, m_cLastMovePt.x, m_cLastMovePt.y);
     GdkEventMotion event;
     GtkWidget *draw = GetDrawing();
     event.window = draw->window;

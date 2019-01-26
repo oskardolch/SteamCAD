@@ -8,6 +8,7 @@ config.*
 Makefile
 libdxflib.log
 log
+SteamCAD
 SteamCAD.log
 SteamCAD.layout
 SteamCAD.cbp
@@ -19,16 +20,19 @@ dxflib/.deps
 dxflib/Makefile
 dxflib/*.o
 dxflib/*.a
+dxflib/.dirstamp
 Images/Makefile
 Images/steamcad.desktop
 Images/SteamCAD_ico.png
 Images/steamcad_old.png
 Linux/po
 Linux/.deps
+Linux/.dirstamp
 Linux/config.h
 !Linux/config.h.in
 Linux/Makefile
 Linux/*.o
+Linux/stamp-h1
 Linux/SteamCAD
 Manual/*.aux
 Manual/*.dvi
@@ -39,6 +43,7 @@ Manual/Source/*.aux
 Papers/Makefile
 po/Makefile
 Source/.deps
+Source/.dirstamp
 Source/*.o
 Source/*.a
 Source/Makefile

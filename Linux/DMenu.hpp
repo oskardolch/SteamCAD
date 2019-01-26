@@ -3,7 +3,7 @@
 
 #include <gtk/gtk.h>
 
-GtkAccelGroup* InitMenu(GtkWidget *wBox, void *pPtr);
+GtkAccelGroup* InitMenu(GtkWidget *wBox, GtkAccelGroup *pAccelGroup, void *pPtr);
 
 #endif
 

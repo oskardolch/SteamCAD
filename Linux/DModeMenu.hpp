@@ -3,7 +3,7 @@
 
 #include <gtk/gtk.h>
 
-void CreateModeMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel);
+void CreateModeMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel, GtkAccelGroup *pEscAccel);
 
 #endif
 

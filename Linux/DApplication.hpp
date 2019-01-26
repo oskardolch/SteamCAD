@@ -69,6 +69,8 @@ private:
     GtkWidget *m_pSnapEnableMnu;
     GtkWidget *m_pSnapDisableMnu;
 
+    GtkAccelGroup *m_pAccelGroup;
+
     char m_sStatus2Base[64];
     char m_sStatus2Msg[128];
     double m_dRestrictValue;
@@ -144,7 +146,7 @@ private:
     gboolean GetUpdateRegion(PDPtrList pPolygons, GdkRectangle *pRect);
     void DrawSizeRectClip(cairo_t *cr, double x, double y);
 
-    void StartNewObject();
+    void StartNewObject(gboolean bShowEdit);
     void CopyIniFiles(const char *psConfDir);
 public:	
     CDApplication(const char *psConfDir, const char *psAppPath);

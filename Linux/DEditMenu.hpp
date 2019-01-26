@@ -3,7 +3,7 @@
 
 #include <gtk/gtk.h>
 
-void CreateEditMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel);
+void CreateEditMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel, GtkAccelGroup *pEscAccel);
 
 #endif
 

@@ -11,7 +11,7 @@ CFLAGS = -Wall \
 ARFLAGS=rcs
 
 CARGS = `pkg-config --cflags gtk+-2.0 gthread-2.0 gio-2.0`
-GCARGS = `pkg-config --cflags --libs gtk+-2.0 gthread-2.0 gio-2.0`
+GARGS = `pkg-config --libs gtk+-2.0 gthread-2.0 gio-2.0`
 
 # dxflib
 
@@ -44,7 +44,7 @@ DGuiobj = SteamCAD.o DMenu.o DApplication.o DDataTypes.o DMath.o DTopo.o \
     DFileMenu.o DModeMenu.o DEditMenu.o DViewToolsMenu.o DFileSetupDlg.o \
     DLineStyleDlg.o DDimEditDlg.o DStatDlg.o DSnapDlg.o DScaleDlg.o DExpDXF.o
 DGuimod = $(addprefix $(BUILDDIR), $(DGuiobj)) \
-	-L./Build -Wl,-rpath,/home/pavel/Programs/SteamCAD/Build
+	-L./Build -Wl,-rpath,.
 
 %.o : Linux/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $(BUILDDIR)$@ $(CARGS)
@@ -109,7 +109,7 @@ DExpDXF.o : Source/DExpDXF.cpp Source/DExpDXF.hpp Source/DDataTypes.hpp \
 
 
 main: $(DGuiobj)
-	$(CC) -o $(BUILDDIR)SteamCAD $(DGuimod) $(GCARGS) -ldxflib
+	$(CC) -o $(BUILDDIR)SteamCAD $(DGuimod) $(GARGS) -ldxflib
 
 
 clean: 
