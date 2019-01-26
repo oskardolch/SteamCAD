@@ -3115,9 +3115,9 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
 
         if(m_pActiveObject)
         {
+            double dVal;
             if(!bRestrict)
             {
-                double dVal;
                 if(m_pActiveObject->GetDynValue(m_cLastDrawPt, iDynMode, &dVal))
                 {
                     m_dSavedDist = dVal;
@@ -3146,6 +3146,29 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                     }
                     SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)m_wsStatus2Msg);
                 }
+            }
+            else
+            {
+                dVal = m_dRestrictValue;
+                if((m_iDrawMode == 1) && (iDynMode != 2))
+                {
+                    swprintf(m_wsStatus2Msg, L"%s %.2f %s", m_wsStatus2Base, dVal,
+                        m_cFSR.cAngUnit.wsAbbrev);
+                }
+                else
+                {
+                    if(m_bPaperUnits)
+                    {
+                        swprintf(m_wsStatus2Msg, L"%s %.2f %s", m_wsStatus2Base, dVal,
+                            m_cFSR.cPaperUnit.wsAbbrev);
+                    }
+                    else
+                    {
+                        swprintf(m_wsStatus2Msg, L"%s %.2f %s", m_wsStatus2Base, dVal,
+                            m_cFSR.cLenUnit.wsAbbrev);
+                    }
+                }
+                SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)m_wsStatus2Msg);
             }
 
             cdr.cPt1.x = (rc.left - m_cViewOrigin.x)/m_dUnitScale;

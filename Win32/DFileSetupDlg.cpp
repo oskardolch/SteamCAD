@@ -437,7 +437,7 @@ INT_PTR CDFileSetupDlg::OKBtnClick(HWND hWnd)
     {
         wcscpy(m_cFSR.cLenUnit.wsName, buf);
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev, -1, m_cFSR.cLenUnit.wsAbbrev, 8);
-        m_pFSR->cLenUnit.dBaseToUnit = pLU->dBaseToUnit;
+        m_cFSR.cLenUnit.dBaseToUnit = pLU->dBaseToUnit;
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev2, -1, m_cFSR.cLenUnit.wsAbbrev2, 8);
     }
 
@@ -448,7 +448,7 @@ INT_PTR CDFileSetupDlg::OKBtnClick(HWND hWnd)
         wcscpy(m_cFSR.cAngUnit.wsName, buf);
         pLU = (PDUnit)SendMessage(wnd, CB_GETITEMDATA, m_iCurAngUnit, 0);
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev, -1, m_cFSR.cAngUnit.wsAbbrev, 8);
-        m_pFSR->cAngUnit.dBaseToUnit = pLU->dBaseToUnit;
+        m_cFSR.cAngUnit.dBaseToUnit = pLU->dBaseToUnit;
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev2, -1, m_cFSR.cAngUnit.wsAbbrev2, 8);
     }
 
@@ -459,7 +459,7 @@ INT_PTR CDFileSetupDlg::OKBtnClick(HWND hWnd)
         wcscpy(m_cFSR.cPaperUnit.wsName, buf);
         pLU = (PDUnit)SendMessage(wnd, CB_GETITEMDATA, m_iCurPaperUnit, 0);
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev, -1, m_cFSR.cPaperUnit.wsAbbrev, 8);
-        m_pFSR->cPaperUnit.dBaseToUnit = pLU->dBaseToUnit;
+        m_cFSR.cPaperUnit.dBaseToUnit = pLU->dBaseToUnit;
         MultiByteToWideChar(CP_UTF8, 0, pLU->sAbbrev2, -1, m_cFSR.cPaperUnit.wsAbbrev2, 8);
     }
 
