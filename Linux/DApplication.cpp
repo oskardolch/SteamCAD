@@ -3245,9 +3245,9 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
 
         if(m_pActiveObject)
         {
+            double dVal;
             if(!bRestrict)
             {
-                double dVal;
                 if(m_pActiveObject->GetDynValue(m_cLastDrawPt, iDynMode, &dVal))
                 {
                     m_dSavedDist = dVal;
@@ -3275,6 +3275,29 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
                     }
                     SetStatusBarMsg(1, m_sStatus2Msg);
                 }
+            }
+            else
+            {
+                dVal = m_dRestrictValue;
+                if((m_iDrawMode == 1) && (iDynMode != 2))
+                {
+                    sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
+                        m_cFSR.cAngUnit.sAbbrev);
+                }
+                else
+                {
+                    if(m_bPaperUnits)
+                    {
+                        sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
+                            m_cFSR.cPaperUnit.sAbbrev);
+                    }
+                    else
+                    {
+                        sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
+                            m_cFSR.cLenUnit.sAbbrev);
+                    }
+                }
+                SetStatusBarMsg(1, m_sStatus2Msg);
             }
 
             m_pActiveObject->BuildPrimitives(cPtX, iDynMode, &cdr, false, NULL);
