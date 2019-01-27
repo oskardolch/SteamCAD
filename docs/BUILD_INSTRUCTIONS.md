@@ -10,6 +10,14 @@ $ sudo make install
 ```
 should install the software, including the start menu launcher.
 
+# Ubuntu or non-MATE environment
+The install prerequisities might differ on Ubuntu, or on any environment using neither
+MATE nor a GTK+-2.0 based desktop system. In this case the needed libraries might be
+`libgtk2.0-dev`, `libgtk+-2.0.dev` or so.
+
+On Ubuntu it might also be good to install `libcanberra-gtk-dev`, although SteamCAD
+does not depend on it, GTK might issue a worning if this library is not installed.
+
 # Linux Manual
 It still possible to compile the software without GNU build utilities.
 
@@ -28,8 +36,11 @@ Also follow the more detailed instrcutions in the pdf manual.
 Both the provided MS Windows builds were compiled with MinGW64. The tricky part is, that the SteamCAD.exe
 is linked to cairo.dll, which was build from Cairo source code. If you want to build SteamCAD using MinGW,
 you can use the delivered libcairo.dll.a binary file to link it to the delivered cairo.dll library. In this
-case it is just sufficient to create folder Build32 and Build64 under the SteamCAD root folder, copy the
-files cairo.dll and libcairo.dll.a to the corresponding BuildXX folder and issue the commands:
+case, you first need to extract Cairo source into "..\Cairo\cairo-1.14.8" directory. If you have a different
+version of Cairo, you must change the makefile.mingw and put the correct path to CAIROINC. Then you need
+to copy the file "cairo-features.h" from the SteamCAD\cairo\src" to "..\Cairo\cairo-1.14.8\src". Finally
+folders Build32 and Build64 under the SteamCAD root folder, copy the files cairo.dll and libcairo.dll.a
+to the corresponding BuildXX folder and issue the commands:
 ```
 > compile32
 ```
