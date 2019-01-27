@@ -7,13 +7,10 @@ install:
   - sudo apt-get -y install libcairo2-dev libgtk2.0-dev libdxflib-dev
 
 script:
-  - mkdir Build
-  - make -fmakefile.gcc libdxflib.a -j$(nproc)
-  - make -fmakefile.gcc main -j$(nproc)
-  - mkdir -p appdir/usr/bin ; mkdir -p appdir/usr/share/applications ; mkdir -p appdir/usr/share/steamcad # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
-  - cp Linux/steamcad.desktop appdir/usr/share/applications/ ; cp Build/SteamCAD Linux/steamcad appdir/usr/bin/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
-  - chmod +x appdir/usr/bin/* # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
-  - cp Papers/* appdir/usr/share/steamcad/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1
+  - ./configure --prefix=/usr
+  - make -j$(nproc)
+  - make install DESTDIR=$(readlink -f appdir) ; find appdir/
+  - sed -i -e 's|^Icon=.*|Icon=steamcad|g' appdir/usr/share/applications/steamcad.desktop
   - mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; cp Images/steamcad.png appdir/usr/share/icons/hicolor/256x256/apps/ # FIXME; https://github.com/oskardolch/SteamCAD/issues/1#issuecomment-439653147
   - wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
   - chmod a+x linuxdeployqt-continuous-x86_64.AppImage
