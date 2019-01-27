@@ -10,6 +10,15 @@ $ sudo make install
 ```
 should install the software, including the start menu launcher.
 
+If the automated build fails for some reason, and the autotools are installed
+on the build nachine, you can try to fix it by issuing the following command:
+```
+$ aclocal
+$ autoconf
+$ automake
+```
+Then repeate the ./configure steps.
+
 # Ubuntu or non-MATE environment
 The install prerequisities might differ on Ubuntu, or on any environment using neither
 MATE nor a GTK+-2.0 based desktop system. In this case the needed libraries might be
@@ -39,7 +48,7 @@ you can use the delivered libcairo.dll.a binary file to link it to the delivered
 case, you first need to extract Cairo source into "..\Cairo\cairo-1.14.8" directory. If you have a different
 version of Cairo, you must change the makefile.mingw and put the correct path to CAIROINC. Then you need
 to copy the file "cairo-features.h" from the SteamCAD\cairo\src" to "..\Cairo\cairo-1.14.8\src". Finally
-folders Build32 and Build64 under the SteamCAD root folder, copy the files cairo.dll and libcairo.dll.a
+create folders Build32 and Build64 under the SteamCAD root folder, copy the files cairo.dll and libcairo.dll.a
 to the corresponding BuildXX folder and issue the commands:
 ```
 > compile32
