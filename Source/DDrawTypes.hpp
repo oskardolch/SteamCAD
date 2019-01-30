@@ -5,10 +5,27 @@
 #include <stdio.h>
 #include "DParser.hpp"
 
+enum CDDrawType
+{
+    dtLine = 1,
+    dtCircle = 2,
+    dtEllipse = 3,
+    dtArcEllipse = 4,
+    dtHyperbola = 5,
+    dtParabola = 6,
+    dtSpline = 7,
+    dtEvolvent = 8,
+    dtGroup = 100
+};
+
 typedef class CDObject
 {
 private:
-    int m_iType; // 1 line, 2 circle, 3 ellipse, 4 arc ellipse, 5 hyperbola, 6 parabola, 7 spline
+    m_iDataSize;
+    m_iDataLen;
+    CDObject **m_pGroupObjects;
+
+    CDDrawType m_iType;
     CDLine m_cLines[2];
     CDRefPoint m_cBounds[2];
     PDPointList m_pInputPoints;
@@ -58,7 +75,7 @@ private:
     void SwapBounds();
     bool RemovePart(bool bDown, PDRefPoint pBounds);
 public:
-    CDObject(int iType, double dWidth);
+    CDObject(CDDrawType iType, double dWidth);
     ~CDObject();
     bool AddPoint(double x, double y, char iCtrl, bool bFromGui); // returns true if the point is the last point
     void RemoveLastPoint();

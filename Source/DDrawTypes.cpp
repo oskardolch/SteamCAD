@@ -32,8 +32,18 @@ void SwapBytes(unsigned char *pDest, unsigned char *pSrc, int iLen, bool bSwap)
 
 // CDObject
 
-CDObject::CDObject(int iType, double dWidth)
+CDObject::CDObject(CDDrawType iType, double dWidth)
 {
+    m_iDataSize = 0;
+    m_iDataLen = 0;
+    m_pGroupObjects = NULL;
+
+    if(iType == dtGroup)
+    {
+        m_iDataSize = 16;
+        m_pGroupObjects = (PDObject*)malloc(m_iDataSize*sizeof(PDObject));
+    }
+
     m_iType = iType;
     m_pInputPoints = new CDPointList();
     m_pUndoPoints = new CDPointList();
@@ -61,6 +71,15 @@ CDObject::CDObject(int iType, double dWidth)
 
 CDObject::~CDObject()
 {
+    if(m_iDataSize > 0)
+    {
+        for(int i = 0; i < m_iDataLen; i++)
+        {
+            delete m_pGroupObjects[i];
+        }
+        free(m_pGroupObjects);
+    }
+
     PDDimension pDim;
     for(int i = 0; i < m_pDimens->GetCount(); i++)
     {

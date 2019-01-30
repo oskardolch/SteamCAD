@@ -2112,6 +2112,7 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
     PDObject pLineObj;
 
     m_sStatus2Base[0] = 0;
+    m_sStatus3Base[0] = 0;
     GtkWidget *msg_dlg = NULL;
 
     if(iLines > 0)
@@ -2128,24 +2129,25 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
         if(cLine2.bIsSet) iLinesFlag |= 2;
     }
 
-    switch(m_iDrawMode)
+    switch(m_iDrawMode + IDM_MODESELECT)
     {
-    case 1:
+    case IDM_MODELINE:
         strcpy(m_sStatus2Base, _("Angle: "));
-        m_pActiveObject = new CDObject(1, m_cFSR.dDefLineWidth);
+        m_pActiveObject = new CDObject(dtLine, m_cFSR.dDefLineWidth);
         if(bShowEdit)
         {
             if(!gtk_widget_get_visible(m_pStatEdt1))
             {
                 gtk_widget_show(m_pStatEdt1);
+                gtk_widget_show(m_pStatEdt2);
                 gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
             }
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case 2:
+    case IDM_MODECIRCLE:
         strcpy(m_sStatus2Base, _("Radius: "));
-        m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
+        m_pActiveObject = new CDObject(dtCircle, m_cFSR.dDefLineWidth);
         if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         //if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         if(bShowEdit)
@@ -2158,18 +2160,32 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case 3:
-        m_pActiveObject = new CDObject(3, m_cFSR.dDefLineWidth);
+    case IDM_MODERECTANGLE:
+        strcpy(m_sStatus2Base, _("Width: "));
+        strcpy(m_sStatus3Base, _("Height: "));
+        m_pActiveObject = new CDObject(dtGroup, m_cFSR.dDefLineWidth);
+        if(bShowEdit)
+        {
+            if(!gtk_widget_get_visible(m_pStatEdt1))
+            {
+                gtk_widget_show(m_pStatEdt1);
+                gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+            }
+            gtk_widget_grab_focus(m_pStatEdt1);
+        }
+        break;
+    case IDM_MODEELLIPSE:
+        m_pActiveObject = new CDObject(dtEllipse, m_cFSR.dDefLineWidth);
         if(iLines == 2)
         {
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
         break;
-    case 4:
+    case IDM_MODEARCELLIPSE:
         if(iLines == 2)
         {
-            m_pActiveObject = new CDObject(4, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtArcEllipse, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
@@ -2182,10 +2198,10 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case 5:
+    case IDM_MODEHYPERBOLA:
         if(iLines == 2)
         {
-            m_pActiveObject = new CDObject(5, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtHyperbola, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
@@ -2198,10 +2214,10 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case 6:
+    case IDM_MODEPARABOLA:
         if(iLines == 1)
         {
-            m_pActiveObject = new CDObject(6, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtParabola, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         }
         else
@@ -2213,17 +2229,17 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case 7:
-        m_pActiveObject = new CDObject(7, m_cFSR.dDefLineWidth);
+    case IDM_MODESPLINE:
+        m_pActiveObject = new CDObject(dtSpline, m_cFSR.dDefLineWidth);
         break;
-    case 8:
+    case IDM_MODEEVEOLVENT:
         iLines = m_pDrawObjects->GetNumOfSelectedCircles();
         if(iLines == 1)
         {
             pLineObj = m_pDrawObjects->GetSelectedCircle(0);
             cLine1 = pLineObj->GetCircle();
             if(cLine1.bIsSet) iLinesFlag |= 1;
-            m_pActiveObject = new CDObject(8, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtEvolvent, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         }
         else
@@ -2262,8 +2278,9 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
     }
 
     strcpy(m_sStatus2Msg, m_sStatus2Base);
+    strcpy(m_sStatus3Msg, m_sStatus3Base);
     SetStatusBarMsg(1, m_sStatus2Msg);
-    SetStatusBarMsg(2, "");
+    SetStatusBarMsg(2, m_sStatus3Msg);
 }
 
 void CDApplication::SetMode(int iNewMode, bool bFromAccel)
@@ -2458,9 +2475,9 @@ void CDApplication::EditMoveCmd(GtkWidget *widget)
 
     m_iRestrictSet = ParseInputString((char*)sBuf, m_pFileSetupDlg->GetUnitList(), &m_dRestrictValue);
     if(IS_LENGTH_VAL(m_iRestrictSet))
-        strcpy(m_sStatus2Msg, _("Click a line to move along"));
-    else strcpy(m_sStatus2Msg, _("Click a point to move from"));
-    SetStatusBarMsg(2, m_sStatus2Msg);
+        strcpy(m_sStatus3Msg, _("Click a line to move along"));
+    else strcpy(m_sStatus3Msg, _("Click a point to move from"));
+    SetStatusBarMsg(2, m_sStatus3Msg);
     m_iToolMode = 2;
     return;
 }
@@ -2479,16 +2496,16 @@ void CDApplication::EditRotateCmd(GtkWidget *widget)
 
     gtk_widget_grab_focus(m_pStatEdt1);
 
-    strcpy(m_sStatus2Msg, _("Click a point to rotate about"));
-    SetStatusBarMsg(2, m_sStatus2Msg);
+    strcpy(m_sStatus3Msg, _("Click a point to rotate about"));
+    SetStatusBarMsg(2, m_sStatus3Msg);
     m_iToolMode = 3;
     return;
 }
 
 void CDApplication::EditMirrorCmd(GtkWidget *widget)
 {
-    strcpy(m_sStatus2Msg, _("Click a line to mirror about"));
-    SetStatusBarMsg(2, m_sStatus2Msg);
+    strcpy(m_sStatus3Msg, _("Click a line to mirror about"));
+    SetStatusBarMsg(2, m_sStatus3Msg);
     m_iToolMode = 4;
     return;
 }
@@ -3592,8 +3609,8 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                 {
                     m_cMeasPoint1.cOrigin = m_cLastDrawPt;
                     m_cMeasPoint1.bIsSet = true;
-                    strcpy(m_sStatus2Msg, _("Click a point to move to"));
-                    SetStatusBarMsg(2, m_sStatus2Msg);
+                    strcpy(m_sStatus3Msg, _("Click a point to move to"));
+                    SetStatusBarMsg(2, m_sStatus3Msg);
                 }
             }
         }
@@ -3640,15 +3657,15 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
             {
                 m_cMeasPoint2.bIsSet = true;
                 m_cMeasPoint2.cOrigin = m_cLastDrawPt;
-                strcpy(m_sStatus2Msg, _("Click a point to rotate to"));
-                SetStatusBarMsg(2, m_sStatus2Msg);
+                strcpy(m_sStatus3Msg, _("Click a point to rotate to"));
+                SetStatusBarMsg(2, m_sStatus3Msg);
             }
             else
             {
                 m_cMeasPoint1.bIsSet = true;
                 m_cMeasPoint1.cOrigin = m_cLastDrawPt;
-                strcpy(m_sStatus2Msg, _("Click a point to rotate from"));
-                SetStatusBarMsg(2, m_sStatus2Msg);
+                strcpy(m_sStatus3Msg, _("Click a point to rotate from"));
+                SetStatusBarMsg(2, m_sStatus3Msg);
             }
         }
         else if(m_iToolMode == 4)
@@ -3917,7 +3934,7 @@ void CDApplication::Edit1Changed(GtkEntry *entry)
     const gchar *sBuf = gtk_entry_get_text(entry);
 
     // Ugly hack for Ubuntu
-    if((strcmp(sBuf, "l") == 0) || (strcmp(sBuf, "c") == 0))
+    if((strcmp(sBuf, "l") == 0) || (strcmp(sBuf, "c") == 0) || (strcmp(sBuf, "r") == 0))
     {
         gtk_entry_set_text(entry, "");
         return;
@@ -3938,9 +3955,9 @@ void CDApplication::Edit1Changed(GtkEntry *entry)
     if((m_iToolMode == 2) && !m_cMeasPoint1.bIsSet && (iOldRest != m_iRestrictSet))
     {
         if(IS_LENGTH_VAL(m_iRestrictSet))
-            strcpy(m_sStatus2Msg, _("Click a line to move along"));
-        else strcpy(m_sStatus2Msg, _("Click a point to move from"));
-        SetStatusBarMsg(2, m_sStatus2Msg);
+            strcpy(m_sStatus3Msg, _("Click a line to move along"));
+        else strcpy(m_sStatus3Msg, _("Click a point to move from"));
+        SetStatusBarMsg(2, m_sStatus3Msg);
     }
     return;
 }
