@@ -45,6 +45,7 @@ CDObject::CDObject(CDDrawType iType, double dWidth)
     }
 
     m_iType = iType;
+    m_iSubType = dstNone;
     m_pInputPoints = new CDPointList();
     m_pUndoPoints = new CDPointList();
     m_pCachePoints = new CDPointList();
@@ -73,10 +74,7 @@ CDObject::~CDObject()
 {
     if(m_iDataSize > 0)
     {
-        for(int i = 0; i < m_iDataLen; i++)
-        {
-            delete m_pGroupObjects[i];
-        }
+        ClearGroups();
         free(m_pGroupObjects);
     }
 
@@ -96,6 +94,49 @@ CDObject::~CDObject()
     delete m_pInputPoints;
 }
 
+void CDObject::ClearGroups()
+{
+    for(int i = 0; i < m_iDataLen; i++)
+    {
+        delete m_pGroupObjects[i];
+    }
+    m_iDataLen = 0;
+}
+
+void CDObject::AddChild(CDObject *pObj)
+{
+    if(m_iDataLen >= m_iDataSize)
+    {
+        m_iDataSize += 16;
+        m_pGroupObjects = (PDObject*)realloc(m_pGroupObjects, m_iDataSize*sizeof(PDObject));
+    }
+    m_pGroupObjects[m_iDataLen++] = pObj;
+}
+
+void CDObject::SetSubType(CDDrawSubType iSubType)
+{
+    if(m_iSubType == iSubType) return;
+    ClearGroups();
+    m_iSubType = iSubType;
+
+    PDObject pChild;
+    switch(m_iSubType)
+    {
+    case dstRectangle:
+        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
+        AddChild(pChild);
+        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
+        AddChild(pChild);
+        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
+        AddChild(pChild);
+        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
+        AddChild(pChild);
+        break;
+    default:
+        break;
+    }
+}
+
 bool CDObject::AddPoint(double x, double y, char iCtrl, bool bFromGui)
 {
     bool bRes = false;
@@ -105,33 +146,64 @@ bool CDObject::AddPoint(double x, double y, char iCtrl, bool bFromGui)
 
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         bRes = AddLinePoint(x, y, iCtrl, m_pInputPoints);
         break;
-    case 2:
+    case dtCircle:
         bRes = AddCirclePoint(x, y, iCtrl, m_pInputPoints, m_cLines);
         break;
-    case 3:
+    case dtEllipse:
         bRes = AddEllipsePoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
-    case 4:
+    case dtArcEllipse:
         bRes = AddArcElpsPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
-    case 5:
+    case dtHyperbola:
         bRes = AddHyperPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
-    case 6:
+    case dtParabola:
         bRes = AddParabPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
-    case 7:
+    case dtSpline:
         bRes = AddSplinePoint(x, y, iCtrl, m_pInputPoints);
         break;
-    case 8:
+    case dtEvolvent:
         bRes = AddEvolvPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
+        break;
+    case dtGroup:
+        switch(m_iSubType)
+        {
+        case dstRectangle:
+            bRes = AddRectanglePoint(x, y, iCtrl);
+            break;
+        default:
+            break;
+        }
         break;
     }
 
     return bRes;
+}
+
+bool CDObject::AddRectanglePoint(double x, double y, char iCtrl)
+{
+    m_pInputPoints->AddPoint(x, y, iCtrl);
+    if(m_pInputPoints->GetCount(-1) < 2)
+    {
+        m_pGroupObjects[0]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[1]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[2]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[3]->AddPoint(x, y, 0, false);
+    }
+    else
+    {
+        CDInputPoint cFirstPt = m_pInputPoints->GetPoint(0, -1);
+        m_pGroupObjects[0]->AddPoint(cFirstPt.cPoint.x, y, 0, false);
+        m_pGroupObjects[1]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);
+        m_pGroupObjects[2]->AddPoint(x, cFirstPt.cPoint.y, 0, false);
+        m_pGroupObjects[3]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);
+    }
+    return (m_pInputPoints->GetCount(-1) == 2);
 }
 
 void CDObject::RemoveLastPoint()
@@ -163,22 +235,24 @@ bool CDObject::BuildCache(CDLine cTmpPt, int iMode)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return BuildLineCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, &m_dMovedDist);
-    case 2:
+    case dtCircle:
         return BuildCircCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case 3:
+    case dtEllipse:
         return BuildEllipseCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case 4:
+    case dtArcEllipse:
         return BuildArcElpsCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case 5:
+    case dtHyperbola:
         return BuildHyperCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case 6:
+    case dtParabola:
         return BuildParabCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case 7:
+    case dtSpline:
         return BuildSplineCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, &m_dMovedDist);
-    case 8:
+    case dtEvolvent:
         return BuildEvolvCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -188,29 +262,31 @@ void CDObject::AddCurveSegment(double dStart, double dEnd, PDRect pRect)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         AddLineSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 2:
+    case dtCircle:
         AddCircSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 3:
+    case dtEllipse:
         AddElpsSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 4:
+    case dtArcEllipse:
         AddArcElpsSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 5:
+    case dtHyperbola:
         AddHyperSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 6:
+    case dtParabola:
         AddParabSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 7:
+    case dtSpline:
         AddSplineSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
-    case 8:
+    case dtEvolvent:
         AddEvolvSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
+        break;
+    case dtGroup:
         break;
     }
 }
@@ -382,37 +458,40 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
 
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         iRes = BuildLinePrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cBounds, dExt, &m_dMovedDist, &cBnds);
         break;
-    case 2:
+    case dtCircle:
         iRes = BuildCircPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds);
         break;
-    case 3:
+    case dtEllipse:
         iRes = BuildEllipsePrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
         break;
-    case 4:
+    case dtArcEllipse:
         iRes = BuildArcElpsPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds);
         break;
-    case 5:
+    case dtHyperbola:
         iRes = BuildHyperPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
         break;
-    case 6:
+    case dtParabola:
         iRes = BuildParabPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
         break;
-    case 7:
+    case dtSpline:
         iRes = BuildSplinePrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
         break;
-    case 8:
+    case dtEvolvent:
         iRes = BuildEvolvPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
+        break;
+    case dtGroup:
+        iRes = 0;
         break;
     }
 
@@ -656,10 +735,10 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
 
             switch(m_iType)
             {
-            case 1:
+            case dtLine:
                 strcpy(m_cTmpDim.psLab, pAttrs->sLengthMask);
                 break;
-            case 2:
+            case dtCircle:
                 strcpy(m_cTmpDim.psLab, pAttrs->sAngleMask);
                 break;
             default:
@@ -951,29 +1030,31 @@ bool CDObject::IsNearPoint(CDPoint cPt, double dTolerance, int *piDimen)
     cPtX.bIsSet = false;
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         dDist = GetLineDistFromPt(cPt, m_pCachePoints, &cPtX);
         break;
-    case 2:
+    case dtCircle:
         dDist = GetCircDistFromPt(cPt, cPt, true, m_pCachePoints, &cPtX);
         break;
-    case 3:
+    case dtEllipse:
         dDist = GetElpsDistFromPt(cPt, cPt, 1, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 4:
+    case dtArcEllipse:
         dDist = GetArcElpsDistFromPt(cPt, cPt, 1, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 5:
+    case dtHyperbola:
         dDist = GetHyperDistFromPt(cPt, cPt, 1, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 6:
+    case dtParabola:
         dDist = GetParabDistFromPt(cPt, cPt, 1, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 7:
+    case dtSpline:
         dDist = GetSplineDistFromPt(cPt, cPt, m_pCachePoints, &cPtX);
         break;
-    case 8:
+    case dtEvolvent:
         dDist = GetEvolvDistFromPt(cPt, cPt, m_pCachePoints, &cPtX);
+        break;
+    case dtGroup:
         break;
     }
 
@@ -1052,22 +1133,24 @@ bool CDObject::GetNativeRefPoint(double dRef, PDPoint pPt)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return GetLineRefPoint(dRef, m_pCachePoints, pPt);
-    case 2:
+    case dtCircle:
         return GetCircRefPoint(dRef, m_pCachePoints, pPt);
-    case 3:
+    case dtEllipse:
         return GetElpsRefPoint(dRef, m_pCachePoints, pPt);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsRefPoint(dRef, m_pCachePoints, pPt);
-    case 5:
+    case dtHyperbola:
         return GetHyperRefPoint(dRef, m_pCachePoints, pPt);
-    case 6:
+    case dtParabola:
         return GetParabRefPoint(dRef, m_pCachePoints, pPt);
-    case 7:
+    case dtSpline:
         return GetSplineRefPoint(dRef, m_pCachePoints, pPt);
-    case 8:
+    case dtEvolvent:
         return GetEvolvRefPoint(dRef, m_pCachePoints, pPt);
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -1077,22 +1160,24 @@ bool CDObject::GetNativeRefDir(double dRef, PDPoint pPt)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return GetLineRefDir(dRef, m_pCachePoints, pPt);
-    case 2:
+    case dtCircle:
         return GetCircRefDir(dRef, m_pCachePoints, pPt);
-    case 3:
+    case dtEllipse:
         return GetElpsRefDir(dRef, m_pCachePoints, pPt);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsRefDir(dRef, m_pCachePoints, pPt);
-    case 5:
+    case dtHyperbola:
         return GetHyperRefDir(dRef, m_pCachePoints, pPt);
-    case 6:
+    case dtParabola:
         return GetParabRefDir(dRef, m_pCachePoints, pPt);
-    case 7:
+    case dtSpline:
         return GetSplineRefDir(dRef, m_pCachePoints, pPt);
-    case 8:
+    case dtEvolvent:
         return GetEvolvRefDir(dRef, m_pCachePoints, pPt);
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -1223,22 +1308,24 @@ bool CDObject::HasEnoughPoints()
 
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return(HasLineEnoughPoints(m_pInputPoints));
-    case 2:
+    case dtCircle:
         return(HasCircEnoughPoints(m_pInputPoints, iInputLines));
-    case 3:
+    case dtEllipse:
         return(HasElpsEnoughPoints(m_pInputPoints, iInputLines));
-    case 4:
+    case dtArcEllipse:
         return(HasArcElpsEnoughPoints(m_pInputPoints, iInputLines));
-    case 5:
+    case dtHyperbola:
         return(HasHyperEnoughPoints(m_pInputPoints, iInputLines));
-    case 6:
+    case dtParabola:
         return(HasParabEnoughPoints(m_pInputPoints, iInputLines));
-    case 7:
+    case dtSpline:
         return(HasSplineEnoughPoints(m_pInputPoints));
-    case 8:
+    case dtEvolvent:
         return(HasEvolvEnoughPoints(m_pInputPoints, iInputLines));
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -1325,29 +1412,31 @@ double CDObject::GetDistFromPt(CDPoint cPt, CDPoint cRefPt, bool bSnapCenters, P
 
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         dRes = GetLineDistFromPt(cPt, m_pCachePoints, &cPtX);
         break;
-    case 2:
+    case dtCircle:
         dRes = GetCircDistFromPt(cPt, cRefPt, bSnapCenters, m_pCachePoints, &cPtX);
         break;
-    case 3:
+    case dtEllipse:
         dRes = GetElpsDistFromPt(cPt, cRefPt, iMask, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 4:
+    case dtArcEllipse:
         dRes = GetArcElpsDistFromPt(cPt, cRefPt, iMask, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 5:
+    case dtHyperbola:
         dRes = GetHyperDistFromPt(cPt, cRefPt, iMask, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 6:
+    case dtParabola:
         dRes = GetParabDistFromPt(cPt, cRefPt, iMask, m_pCachePoints, &cPtX, m_cBounds);
         break;
-    case 7:
+    case dtSpline:
         dRes = GetSplineDistFromPt(cPt, cRefPt, m_pCachePoints, &cPtX);
         break;
-    case 8:
+    case dtEvolvent:
         dRes = GetEvolvDistFromPt(cPt, cRefPt, m_pCachePoints, &cPtX);
+        break;
+    case dtGroup:
         break;
     }
 
@@ -1465,23 +1554,25 @@ bool CDObject::GetRestrictPoint(CDPoint cPt, int iMode, bool bRestrictSet, doubl
 
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return GetLineRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 2:
+    case dtCircle:
         return GetCircleRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints,
             m_pInputPoints, m_cLines);
-    case 3:
+    case dtEllipse:
         return GetElpsRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 5:
+    case dtHyperbola:
         return GetHyperRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 6:
+    case dtParabola:
         return GetParabRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 7:
+    case dtSpline:
         return GetSplineRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case 8:
+    case dtEvolvent:
         return GetEvolvRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -1517,11 +1608,11 @@ bool CDObject::IsClosedShape()
 {
     switch(m_iType)
     {
-    case 2:
-    case 3:
-    case 4:
+    case dtCircle:
+    case dtEllipse:
+    case dtArcEllipse:
         return true;
-    case 7:
+    case dtSpline:
         if(m_pInputPoints->GetCount(1) < 1) return false;
         return true;
     default:
@@ -1533,16 +1624,16 @@ int CDObject::IsClosed()
 {
     switch(m_iType)
     {
-    case 2:
-    case 3:
-    case 4:
+    case dtCircle:
+    case dtEllipse:
+    case dtArcEllipse:
         if(m_cBounds[0].bIsSet)
         {
             if(m_cBounds[1].bIsSet) return 0;
             return 1;
         }
         return 2;
-    case 7:
+    case dtSpline:
         if(m_pInputPoints->GetCount(1) < 1) return 0;
         if(m_cBounds[0].bIsSet)
         {
@@ -2135,22 +2226,24 @@ double CDObject::GetRadiusAtPt(CDLine cPtX, PDLine pPtR, bool bNewPt)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return GetLineRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt);
-    case 2:
+    case dtCircle:
         return GetCircRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt);
-    case 3:
+    case dtEllipse:
         return GetElpsRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt, m_pInputPoints, m_cLines);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt, m_pInputPoints, m_cLines);
-    case 5:
+    case dtHyperbola:
         return GetHyperRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt);
-    case 6:
+    case dtParabola:
         return GetParabRadiusAtPt(cPtX.cOrigin, m_pCachePoints, pPtR, bNewPt);
-    case 7:
+    case dtSpline:
         return GetSplineRadiusAtPt(cPtX, m_pCachePoints, pPtR, bNewPt);
-    case 8:
+    case dtEvolvent:
         return GetEvolvRadiusAtPt(cPtX, m_pCachePoints, pPtR, bNewPt);
+    case dtGroup:
+        return -1.0;
     default:
         return -1.0;
     }
@@ -2168,11 +2261,13 @@ bool CDObject::GetDynValue(CDPoint cPt, int iMode, double *pdVal)
     {
         switch(m_iType)
         {
-        case 1:
+        case dtLine:
             bRes = GetLineAngle(m_pCachePoints, pdVal);
             break;
-        case 2:
+        case dtCircle:
             bRes = GetCirceRad(m_pCachePoints, pdVal);
+            break;
+        default:
             break;
         }
     }
@@ -2529,22 +2624,24 @@ bool CDObject::GetPointRefDist(double dRef, double *pdDist)
 {
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         return GetLinePointRefDist(dRef, m_pCachePoints, pdDist);
-    case 2:
+    case dtCircle:
         return GetCircPointRefDist(dRef, m_pCachePoints, pdDist);
-    case 3:
+    case dtEllipse:
         return GetElpsPointRefDist(dRef, m_pCachePoints, pdDist);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsPointRefDist(dRef, m_pCachePoints, pdDist);
-    case 5:
+    case dtHyperbola:
         return GetHyperPointRefDist(dRef, m_pCachePoints, pdDist);
-    case 6:
+    case dtParabola:
         return GetParabPointRefDist(dRef, m_pCachePoints, pdDist);
-    case 7:
+    case dtSpline:
         return GetSplinePointRefDist(dRef, m_pCachePoints, pdDist);
-    case 8:
+    case dtEvolvent:
         return GetEvolvPointRefDist(dRef, m_pCachePoints, pdDist);
+    case dtGroup:
+        return false;
     default:
         return false;
     }
@@ -2656,10 +2753,10 @@ bool CDObject::AddDimen(CDPoint cPt, double dDist, PDRect pRect, PDFileAttrs pAt
     char sBuf[64];
     switch(m_iType)
     {
-    case 1:
+    case dtLine:
         strcpy(sBuf, pAttrs->sLengthMask);
         break;
-    case 2:
+    case dtCircle:
         strcpy(sBuf, pAttrs->sAngleMask);
         break;
     default:
@@ -3169,14 +3266,16 @@ int CDObject::GetNumParts()
 {
     switch(m_iType)
     {
-    case 3:
+    case dtEllipse:
         return GetElpsNumParts(m_pCachePoints, m_cBounds);
-    case 4:
+    case dtArcEllipse:
         return GetArcElpsNumParts(m_pCachePoints, m_cBounds);
-    case 5:
+    case dtHyperbola:
         return GetHyperNumParts(m_pCachePoints, m_cBounds);
-    case 6:
+    case dtParabola:
         return GetParabNumParts(m_pCachePoints, m_cBounds);
+    default:
+        return 0;
     }
     return 0;
 }
@@ -3190,17 +3289,19 @@ bool CDObject::RemovePart(bool bDown, PDRefPoint pBounds)
     bool bRes = false;
     switch(m_iType)
     {
-    case 3:
+    case dtEllipse:
         bRes = ElpsRemovePart(bDown, m_pCachePoints, cBounds);
         break;
-    case 4:
+    case dtArcEllipse:
         bRes = ArcElpsRemovePart(bDown, m_pCachePoints, cBounds);
         break;
-    case 5:
+    case dtHyperbola:
         bRes = HyperRemovePart(bDown, m_pCachePoints, cBounds);
         break;
-    case 6:
+    case dtParabola:
         bRes = ParabRemovePart(bDown, m_pCachePoints, cBounds);
+        break;
+    default:
         break;
     }
     if(bRes)
@@ -3917,7 +4018,7 @@ bool CDataList::ReadFromFile(FILE *pf, bool bSwapBytes, bool bClear)
     for(unsigned int i = 0; i < lDataLen; i++)
     {
         fread(buf, 1, 1, pf);
-        pObj = new CDObject(buf[0], 0.2);
+        pObj = new CDObject((CDDrawType)buf[0], 0.2);
         pObj->ReadFromFile(pf, bSwapBytes);
         Add(pObj);
     }

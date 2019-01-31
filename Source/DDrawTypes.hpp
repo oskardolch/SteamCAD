@@ -18,14 +18,21 @@ enum CDDrawType
     dtGroup = 100
 };
 
+enum CDDrawSubType
+{
+    dstNone = 0,
+    dstRectangle = 1
+};
+
 typedef class CDObject
 {
 private:
-    m_iDataSize;
-    m_iDataLen;
+    int m_iDataSize;
+    int m_iDataLen;
     CDObject **m_pGroupObjects;
 
     CDDrawType m_iType;
+    CDDrawSubType m_iSubType;
     CDLine m_cLines[2];
     CDRefPoint m_cBounds[2];
     PDPointList m_pInputPoints;
@@ -74,9 +81,13 @@ private:
     int AddDimenPrimitive(int iPos, PDDimension pDim, PDPrimObject pPrimitive, PDRect pRect);
     void SwapBounds();
     bool RemovePart(bool bDown, PDRefPoint pBounds);
+    void ClearGroups();
+    void AddChild(CDObject *pObj);
+    bool AddRectanglePoint(double x, double y, char iCtrl);
 public:
     CDObject(CDDrawType iType, double dWidth);
     ~CDObject();
+    void SetSubType(CDDrawSubType iSubType);
     bool AddPoint(double x, double y, char iCtrl, bool bFromGui); // returns true if the point is the last point
     void RemoveLastPoint();
     void Undo();

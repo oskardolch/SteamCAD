@@ -5,10 +5,10 @@ typedef struct CDPoint
 {
     double x;
     double y;
-	  CDPoint& operator+=(const CDPoint& p1);
-	  CDPoint& operator-=(const CDPoint& p1);
-	  CDPoint& operator*=(const double& d1);
-	  CDPoint& operator/=(const double& d1);
+    CDPoint& operator+=(const CDPoint& p1);
+    CDPoint& operator-=(const CDPoint& p1);
+    CDPoint& operator*=(const double& d1);
+    CDPoint& operator/=(const double& d1);
     CDPoint& operator=(const double& d1);
 } *PDPoint;
 

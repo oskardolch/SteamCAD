@@ -306,7 +306,7 @@ CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
     m_lHighColor = 0x00EDD52C; //0x00888800;
     m_lActiveColor = 0x00FF0000;
     m_iHighDimen = -2;
-    m_iDrawMode = 0;
+    m_iDrawMode = modSelect;
     m_iButton = 0;
     m_iToolMode = 0;
     m_cLastDynPt.bIsSet = false;
@@ -1532,7 +1532,7 @@ void CDApplication::Paint(GtkWidget *widget, GdkEventExpose *event)
         }
     }
 
-    if((m_iDrawMode > 0) || (m_iToolMode > 0))
+    if((m_iDrawMode > modSelect) || (m_iToolMode > 0))
     {
         if(m_pActiveObject)
         {
@@ -2129,9 +2129,9 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
         if(cLine2.bIsSet) iLinesFlag |= 2;
     }
 
-    switch(m_iDrawMode + IDM_MODESELECT)
+    switch(m_iDrawMode)
     {
-    case IDM_MODELINE:
+    case modLine:
         strcpy(m_sStatus2Base, _("Angle: "));
         m_pActiveObject = new CDObject(dtLine, m_cFSR.dDefLineWidth);
         if(bShowEdit)
@@ -2139,13 +2139,12 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             if(!gtk_widget_get_visible(m_pStatEdt1))
             {
                 gtk_widget_show(m_pStatEdt1);
-                gtk_widget_show(m_pStatEdt2);
                 gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
             }
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case IDM_MODECIRCLE:
+    case modCircle:
         strcpy(m_sStatus2Base, _("Radius: "));
         m_pActiveObject = new CDObject(dtCircle, m_cFSR.dDefLineWidth);
         if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
@@ -2160,21 +2159,23 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case IDM_MODERECTANGLE:
+    case modRectangle:
         strcpy(m_sStatus2Base, _("Width: "));
         strcpy(m_sStatus3Base, _("Height: "));
         m_pActiveObject = new CDObject(dtGroup, m_cFSR.dDefLineWidth);
+        m_pActiveObject->SetSubType(dstRectangle);
         if(bShowEdit)
         {
             if(!gtk_widget_get_visible(m_pStatEdt1))
             {
                 gtk_widget_show(m_pStatEdt1);
+                gtk_widget_show(m_pStatEdt2);
                 gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
             }
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case IDM_MODEELLIPSE:
+    case modEllipse:
         m_pActiveObject = new CDObject(dtEllipse, m_cFSR.dDefLineWidth);
         if(iLines == 2)
         {
@@ -2182,7 +2183,7 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
         break;
-    case IDM_MODEARCELLIPSE:
+    case modArcElps:
         if(iLines == 2)
         {
             m_pActiveObject = new CDObject(dtArcEllipse, m_cFSR.dDefLineWidth);
@@ -2198,7 +2199,7 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case IDM_MODEHYPERBOLA:
+    case modHyperbola:
         if(iLines == 2)
         {
             m_pActiveObject = new CDObject(dtHyperbola, m_cFSR.dDefLineWidth);
@@ -2214,7 +2215,7 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case IDM_MODEPARABOLA:
+    case modParabola:
         if(iLines == 1)
         {
             m_pActiveObject = new CDObject(dtParabola, m_cFSR.dDefLineWidth);
@@ -2229,10 +2230,10 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_destroy(msg_dlg);
         }
         break;
-    case IDM_MODESPLINE:
+    case modSpline:
         m_pActiveObject = new CDObject(dtSpline, m_cFSR.dDefLineWidth);
         break;
-    case IDM_MODEEVEOLVENT:
+    case modEvolvent:
         iLines = m_pDrawObjects->GetNumOfSelectedCircles();
         if(iLines == 1)
         {
@@ -2258,7 +2259,7 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
         int iCnt = m_pDrawObjects->GetSelectCount();
         if(iCnt == 2)
         {
-            m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtCircle, m_cFSR.dDefLineWidth);
             strcpy(m_sStatus2Base, _("Radius: "));
             if(!gtk_widget_get_visible(m_pStatEdt1))
             {
@@ -2314,9 +2315,9 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
     m_iDrawMode = iNewMode;
 
     StartNewObject(FALSE);
-    if(!m_pActiveObject && (m_iDrawMode > 0)) m_iDrawMode = 0;
+    if(!m_pActiveObject && (m_iDrawMode > modSelect)) m_iDrawMode = modSelect;
 
-    if(m_iDrawMode > 0) DrawCross(cr);
+    if(m_iDrawMode > modSelect) DrawCross(cr);
     cairo_destroy(cr);
 
     m_bSettingProps = true;
@@ -2335,7 +2336,7 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
 
     switch(m_iDrawMode)
     {
-    case 1:
+    case modLine:
         if(!gtk_widget_get_visible(m_pStatEdt1))
         {
             gtk_widget_show(m_pStatEdt1);
@@ -2343,10 +2344,19 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
         }
         gtk_widget_grab_focus(m_pStatEdt1);
         break;
-    case 2:
+    case modCircle:
         if(!gtk_widget_get_visible(m_pStatEdt1))
         {
             gtk_widget_show(m_pStatEdt1);
+            gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
+        }
+        gtk_widget_grab_focus(m_pStatEdt1);
+        break;
+    case modRectangle:
+        if(!gtk_widget_get_visible(m_pStatEdt1))
+        {
+            gtk_widget_show(m_pStatEdt1);
+            gtk_widget_show(m_pStatEdt2);
             gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
         }
         gtk_widget_grab_focus(m_pStatEdt1);
@@ -2383,7 +2393,7 @@ void CDApplication::SetTool(int iNewTool)
     cairo_destroy(cr);
 
     m_iToolMode = iNewTool;
-    m_iDrawMode = 0;
+    m_iDrawMode = modSelect;
 
     StartNewObject(TRUE);
 }
@@ -2666,7 +2676,7 @@ void CDApplication::EditRedoCmd(GtkWidget *widget)
 
 void CDApplication::EditConfirmCmd(GtkWidget *widget)
 {
-    bool bConfirm = (m_iDrawMode == 1) || (m_iDrawMode == 2) ||
+    bool bConfirm = (m_iDrawMode == modLine) || (m_iDrawMode == modCircle) ||
         (m_iToolMode == 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE) ||
         (m_iToolMode == 1);
     if(bConfirm)
@@ -2832,7 +2842,7 @@ void CDApplication::ViewNormalCmd(GtkWidget *widget)
 int CDApplication::GetDynMode()
 {
     int iRes = 0;
-    if(m_iDrawMode > 0) iRes = 1;
+    if(m_iDrawMode > modSelect) iRes = 1;
     else if(m_iToolMode == 1) iRes = 2;
     else if(m_iToolMode == 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE) iRes = 3;
     else if(m_iToolMode == 5) iRes = 4;
@@ -3076,7 +3086,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
         double dAng1;
         bool bDoSnap = true;
 
-        if((m_iDrawMode == 1) && m_pActiveObject)
+        if((m_iDrawMode == modLine) && m_pActiveObject)
         {
             bHasLastPoint = m_pActiveObject->GetPoint(0, 0, &cLstInPt);
         }
@@ -3179,7 +3189,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
 
             if(m_pActiveObject)
             {
-                if((m_iDrawMode == 1) && (iDynMode != 2))
+                if((m_iDrawMode == modLine) && (iDynMode != 2))
                 {
                     bRestrict = IS_ANGLE_VAL(m_iRestrictSet);
                     if(bRestrict)
@@ -3253,7 +3263,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
                 if(m_pActiveObject->GetDynValue(m_cLastDrawPt, iDynMode, &dVal))
                 {
                     m_dSavedDist = dVal;
-                    if((m_iDrawMode == 1) && (iDynMode != 2))
+                    if((m_iDrawMode == modLine) && (iDynMode != 2))
                     {
                         dVal *= m_cFSR.cAngUnit.dBaseToUnit*180.0/M_PI;
                         sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
@@ -3281,7 +3291,7 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
             else
             {
                 dVal = m_dRestrictValue;
-                if((m_iDrawMode == 1) && (iDynMode != 2))
+                if((m_iDrawMode == modLine) && (iDynMode != 2))
                 {
                     sprintf(m_sStatus2Msg, "%s %.2f %s", m_sStatus2Base, dVal,
                         m_cFSR.cAngUnit.sAbbrev);
@@ -3740,7 +3750,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
             cairo_mask(cr, m_pcp);
         }
 
-        if(m_iDrawMode > 0) DrawCross(cr);
+        if(m_iDrawMode > modSelect) DrawCross(cr);
         cairo_destroy(cr);
     }
 
@@ -3884,7 +3894,7 @@ void CDApplication::MouseRButtonUp(GtkWidget *widget, GdkEventButton *event)
             cairo_mask(cr, m_pcp);
         }
 
-        if(m_iDrawMode > 0) DrawCross(cr);
+        if(m_iDrawMode > modSelect) DrawCross(cr);
         cairo_destroy(cr);
     }
 
@@ -3897,7 +3907,7 @@ void CDApplication::MouseRButtonUp(GtkWidget *widget, GdkEventButton *event)
 
 void CDApplication::MouseLDblClick(GtkWidget *widget, GdkEventButton *event)
 {
-    if(m_iDrawMode > 0)
+    if(m_iDrawMode > modSelect)
     {
         if(m_pActiveObject)
         {

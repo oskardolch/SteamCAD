@@ -9,17 +9,31 @@
 //#define IDM_FILEPRINTSET 108
 //#define IDM_FILEPRINT 109
 #define IDM_FILEEXIT 109
+
+#define modSelect 0
+#define modLine 1
+#define modCircle 2
+#define modRectangle 3
+#define modEllipse 4
+#define modArcElps 5
+#define modHyperbola 6
+#define modParabola 7
+#define modSpline 8
+#define modEvolvent 9
+#define modDimen 10
+
 #define IDM_MODESELECT 201
-#define IDM_MODELINE 202
-#define IDM_MODECIRCLE 203
-#define IDM_MODERECTANGLE 204
-#define IDM_MODEELLIPSE 205
-#define IDM_MODEARCELLIPSE 206
-#define IDM_MODEHYPERBOLA 207
-#define IDM_MODEPARABOLA 208
-#define IDM_MODESPLINE 209
-#define IDM_MODEEVEOLVENT 210
-#define IDM_MODEDIMEN 211
+#define IDM_MODELINE (IDM_MODESELECT + modLine)
+#define IDM_MODECIRCLE (IDM_MODESELECT + modCircle)
+#define IDM_MODERECTANGLE (IDM_MODESELECT + modRectangle)
+#define IDM_MODEELLIPSE (IDM_MODESELECT + modEllipse)
+#define IDM_MODEARCELLIPSE (IDM_MODESELECT + modArcElps)
+#define IDM_MODEHYPERBOLA (IDM_MODESELECT + modHyperbola)
+#define IDM_MODEPARABOLA (IDM_MODESELECT + modParabola)
+#define IDM_MODESPLINE (IDM_MODESELECT + modSpline)
+#define IDM_MODEEVEOLVENT (IDM_MODESELECT + modEvolvent)
+#define IDM_MODEDIMEN (IDM_MODESELECT + modDimen)
+
 #define IDM_EDITCOPY 301
 #define IDM_EDITCUT 302
 #define IDM_EDITPASTE 303
