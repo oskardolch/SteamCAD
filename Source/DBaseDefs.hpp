@@ -20,19 +20,32 @@
 #define modParabola 7
 #define modSpline 8
 #define modEvolvent 9
-#define modDimen 10
 
 #define IDM_MODESELECT 201
-#define IDM_MODELINE (IDM_MODESELECT + modLine)
-#define IDM_MODECIRCLE (IDM_MODESELECT + modCircle)
-#define IDM_MODERECTANGLE (IDM_MODESELECT + modRectangle)
-#define IDM_MODEELLIPSE (IDM_MODESELECT + modEllipse)
-#define IDM_MODEARCELLIPSE (IDM_MODESELECT + modArcElps)
-#define IDM_MODEHYPERBOLA (IDM_MODESELECT + modHyperbola)
-#define IDM_MODEPARABOLA (IDM_MODESELECT + modParabola)
-#define IDM_MODESPLINE (IDM_MODESELECT + modSpline)
-#define IDM_MODEEVEOLVENT (IDM_MODESELECT + modEvolvent)
-#define IDM_MODEDIMEN (IDM_MODESELECT + modDimen)
+#define IDM_MODELINE 202
+#define IDM_MODECIRCLE 203
+#define IDM_MODERECTANGLE 204
+#define IDM_MODEELLIPSE 205
+#define IDM_MODEARCELLIPSE 206
+#define IDM_MODEHYPERBOLA 207
+#define IDM_MODEPARABOLA 208
+#define IDM_MODESPLINE 209
+#define IDM_MODEEVEOLVENT 210
+#define IDM_MODEDIMEN 211
+
+#define tolNone 0
+#define tolCopyPar 1
+#define tolMove 2
+#define tolRotate 3
+#define tolMirror 4
+
+#define tolDimen 11
+
+#define tolKnife 21
+#define tolRound 22
+#define tolExtend 23
+#define tolConflict 24
+#define tolMeas 25
 
 #define IDM_EDITCOPY 301
 #define IDM_EDITCUT 302
@@ -56,6 +69,7 @@
 //#define IDM_SNAPMIDPOINT 503
 //#define IDM_SNAPINTERSECT 504
 //#define IDM_SNAPCTRLPOINT 505
+
 #define IDM_TOOLSKNIFE 601
 #define IDM_TOOLSBREAK 602
 #define IDM_TOOLSROUND 603

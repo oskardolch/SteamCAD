@@ -171,14 +171,7 @@ bool CDObject::AddPoint(double x, double y, char iCtrl, bool bFromGui)
         bRes = AddEvolvPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
     case dtGroup:
-        switch(m_iSubType)
-        {
-        case dstRectangle:
-            bRes = AddRectanglePoint(x, y, iCtrl);
-            break;
-        default:
-            break;
-        }
+        bRes = AddGroupPoint(x, y, iCtrl);
         break;
     }
 
@@ -191,19 +184,34 @@ bool CDObject::AddRectanglePoint(double x, double y, char iCtrl)
     if(m_pInputPoints->GetCount(-1) < 2)
     {
         m_pGroupObjects[0]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[0]->AddPoint(x + 1.0, y, 0, false);
         m_pGroupObjects[1]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[1]->AddPoint(x, y + 1.0, 0, false);
         m_pGroupObjects[2]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[2]->AddPoint(x - 1.0, y, 0, false);
         m_pGroupObjects[3]->AddPoint(x, y, 0, false);
+        m_pGroupObjects[3]->AddPoint(x, y - 1.0, 0, false);
     }
     else
     {
-        CDInputPoint cFirstPt = m_pInputPoints->GetPoint(0, -1);
+/*        CDInputPoint cFirstPt = m_pInputPoints->GetPoint(0, -1);
         m_pGroupObjects[0]->AddPoint(cFirstPt.cPoint.x, y, 0, false);
         m_pGroupObjects[1]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);
         m_pGroupObjects[2]->AddPoint(x, cFirstPt.cPoint.y, 0, false);
-        m_pGroupObjects[3]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);
+        m_pGroupObjects[3]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);*/
     }
     return (m_pInputPoints->GetCount(-1) == 2);
+}
+
+bool CDObject::AddGroupPoint(double x, double y, char iCtrl)
+{
+    switch(m_iSubType)
+    {
+    case dstRectangle:
+        return AddRectanglePoint(x, y, iCtrl);
+    default:
+        return false;
+    }
 }
 
 void CDObject::RemoveLastPoint()
@@ -231,6 +239,35 @@ void CDObject::Redo()
     m_pUndoPoints->Remove(iCnt - 1, -1);
 }
 
+bool CDObject::BuildGroupCache(CDLine cTmpPt, int iMode)
+{
+    if(m_iDataLen < 1) return false;
+
+    PDObject pObj = m_pGroupObjects[0];
+    bool bRes = pObj->BuildCache(cTmpPt, iMode);
+    if(iMode == 2)
+    {
+        pObj->GetDynValue(cTmpPt.cOrigin, 2, &m_dMovedDist);
+        double dMoveDist;
+        for(int i = 1; i < m_iDataLen; i++)
+        {
+            pObj = m_pGroupObjects[i];
+            bRes &= pObj->BuildCache(cTmpPt, iMode);
+            pObj->GetDynValue(cTmpPt.cOrigin, 2, &dMoveDist);
+            if(fabs(dMoveDist) < fabs(m_dMovedDist)) m_dMovedDist = dMoveDist;
+        }
+    }
+    else
+    {
+        for(int i = 1; i < m_iDataLen; i++)
+        {
+            pObj = m_pGroupObjects[i];
+            bRes &= pObj->BuildCache(cTmpPt, iMode);
+        }
+    }
+    return bRes;
+}
+
 bool CDObject::BuildCache(CDLine cTmpPt, int iMode)
 {
     switch(m_iType)
@@ -252,10 +289,14 @@ bool CDObject::BuildCache(CDLine cTmpPt, int iMode)
     case dtEvolvent:
         return BuildEvolvCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
     case dtGroup:
-        return false;
+        return BuildGroupCache(cTmpPt, iMode);
     default:
         return false;
     }
+}
+
+void CDObject::AddGroupSegment(double dStart, double dEnd, PDRect pRect)
+{
 }
 
 void CDObject::AddCurveSegment(double dStart, double dEnd, PDRect pRect)
@@ -287,6 +328,7 @@ void CDObject::AddCurveSegment(double dStart, double dEnd, PDRect pRect)
         AddEvolvSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
         break;
     case dtGroup:
+        AddGroupSegment(dStart, dEnd, pRect);
         break;
     }
 }

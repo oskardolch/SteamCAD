@@ -84,6 +84,9 @@ private:
     void ClearGroups();
     void AddChild(CDObject *pObj);
     bool AddRectanglePoint(double x, double y, char iCtrl);
+    bool AddGroupPoint(double x, double y, char iCtrl);
+    bool BuildGroupCache(CDLine cTmpPt, int iMode);
+    void AddGroupSegment(double dStart, double dEnd, PDRect pRect);
 public:
     CDObject(CDDrawType iType, double dWidth);
     ~CDObject();

@@ -71,9 +71,10 @@ private:
 
     GtkAccelGroup *m_pAccelGroup;
 
+    char m_sStatus1Base[64];
+    char m_sStatus1Msg[128];
     char m_sStatus2Base[64];
     char m_sStatus2Msg[128];
-    char m_sStatus3Base[64];
     char m_sStatus3Msg[128];
     double m_dRestrictValue;
     int m_iRestrictSet;
