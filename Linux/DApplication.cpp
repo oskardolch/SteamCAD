@@ -2164,23 +2164,6 @@ void CDApplication::StartNewObject(gboolean bShowEdit)
             gtk_widget_grab_focus(m_pStatEdt1);
         }
         break;
-    case modRectangle:
-        strcpy(m_sStatus1Base, _("Width: "));
-        strcpy(m_sStatus2Base, _("Height: "));
-        m_pActiveObject = new CDObject(dtGroup, m_cFSR.dDefLineWidth);
-        m_pActiveObject->SetSubType(dstRectangle);
-        if(bShowEdit)
-        {
-            if(!gtk_widget_get_visible(m_pStatEdt1))
-            {
-                gtk_widget_show(m_pStatEdt1);
-                gtk_widget_show(m_pStatLab2);
-                gtk_widget_show(m_pStatEdt2);
-                gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
-            }
-            gtk_widget_grab_focus(m_pStatEdt1);
-        }
-        break;
     case modEllipse:
         m_pActiveObject = new CDObject(dtEllipse, m_cFSR.dDefLineWidth);
         if(iLines == 2)
@@ -2358,16 +2341,6 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
         }
         gtk_widget_grab_focus(m_pStatEdt1);
         break;
-    case modRectangle:
-        if(!gtk_widget_get_visible(m_pStatEdt1))
-        {
-            gtk_widget_show(m_pStatEdt1);
-            gtk_widget_show(m_pStatLab2);
-            gtk_widget_show(m_pStatEdt2);
-            gtk_window_remove_accel_group(GTK_WINDOW(m_pMainWnd), m_pAccelGroup);
-        }
-        gtk_widget_grab_focus(m_pStatEdt1);
-        break;
     }
 }
 
@@ -2419,9 +2392,6 @@ void CDApplication::ModeCommand(int iCmd, bool bFromAccel)
         break;
     case IDM_MODECIRCLE:
         SetMode(modCircle, bFromAccel);
-        break;
-    case IDM_MODERECTANGLE:
-        SetMode(modRectangle, bFromAccel);
         break;
     case IDM_MODEELLIPSE:
         SetMode(modEllipse, bFromAccel);

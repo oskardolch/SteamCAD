@@ -34,18 +34,7 @@ void SwapBytes(unsigned char *pDest, unsigned char *pSrc, int iLen, bool bSwap)
 
 CDObject::CDObject(CDDrawType iType, double dWidth)
 {
-    m_iDataSize = 0;
-    m_iDataLen = 0;
-    m_pGroupObjects = NULL;
-
-    if(iType == dtGroup)
-    {
-        m_iDataSize = 16;
-        m_pGroupObjects = (PDObject*)malloc(m_iDataSize*sizeof(PDObject));
-    }
-
     m_iType = iType;
-    m_iSubType = dstNone;
     m_pInputPoints = new CDPointList();
     m_pUndoPoints = new CDPointList();
     m_pCachePoints = new CDPointList();
@@ -72,12 +61,6 @@ CDObject::CDObject(CDDrawType iType, double dWidth)
 
 CDObject::~CDObject()
 {
-    if(m_iDataSize > 0)
-    {
-        ClearGroups();
-        free(m_pGroupObjects);
-    }
-
     PDDimension pDim;
     for(int i = 0; i < m_pDimens->GetCount(); i++)
     {
@@ -92,49 +75,6 @@ CDObject::~CDObject()
     delete m_pCachePoints;
     delete m_pUndoPoints;
     delete m_pInputPoints;
-}
-
-void CDObject::ClearGroups()
-{
-    for(int i = 0; i < m_iDataLen; i++)
-    {
-        delete m_pGroupObjects[i];
-    }
-    m_iDataLen = 0;
-}
-
-void CDObject::AddChild(CDObject *pObj)
-{
-    if(m_iDataLen >= m_iDataSize)
-    {
-        m_iDataSize += 16;
-        m_pGroupObjects = (PDObject*)realloc(m_pGroupObjects, m_iDataSize*sizeof(PDObject));
-    }
-    m_pGroupObjects[m_iDataLen++] = pObj;
-}
-
-void CDObject::SetSubType(CDDrawSubType iSubType)
-{
-    if(m_iSubType == iSubType) return;
-    ClearGroups();
-    m_iSubType = iSubType;
-
-    PDObject pChild;
-    switch(m_iSubType)
-    {
-    case dstRectangle:
-        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
-        AddChild(pChild);
-        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
-        AddChild(pChild);
-        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
-        AddChild(pChild);
-        pChild = new CDObject(dtLine, m_cLineStyle.dWidth);
-        AddChild(pChild);
-        break;
-    default:
-        break;
-    }
 }
 
 bool CDObject::AddPoint(double x, double y, char iCtrl, bool bFromGui)
@@ -170,48 +110,9 @@ bool CDObject::AddPoint(double x, double y, char iCtrl, bool bFromGui)
     case dtEvolvent:
         bRes = AddEvolvPoint(x, y, iCtrl, m_pInputPoints, iInputLines);
         break;
-    case dtGroup:
-        bRes = AddGroupPoint(x, y, iCtrl);
-        break;
     }
 
     return bRes;
-}
-
-bool CDObject::AddRectanglePoint(double x, double y, char iCtrl)
-{
-    m_pInputPoints->AddPoint(x, y, iCtrl);
-    if(m_pInputPoints->GetCount(-1) < 2)
-    {
-        m_pGroupObjects[0]->AddPoint(x, y, 0, false);
-        m_pGroupObjects[0]->AddPoint(x + 1.0, y, 0, false);
-        m_pGroupObjects[1]->AddPoint(x, y, 0, false);
-        m_pGroupObjects[1]->AddPoint(x, y + 1.0, 0, false);
-        m_pGroupObjects[2]->AddPoint(x, y, 0, false);
-        m_pGroupObjects[2]->AddPoint(x - 1.0, y, 0, false);
-        m_pGroupObjects[3]->AddPoint(x, y, 0, false);
-        m_pGroupObjects[3]->AddPoint(x, y - 1.0, 0, false);
-    }
-    else
-    {
-/*        CDInputPoint cFirstPt = m_pInputPoints->GetPoint(0, -1);
-        m_pGroupObjects[0]->AddPoint(cFirstPt.cPoint.x, y, 0, false);
-        m_pGroupObjects[1]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);
-        m_pGroupObjects[2]->AddPoint(x, cFirstPt.cPoint.y, 0, false);
-        m_pGroupObjects[3]->AddPoint(cFirstPt.cPoint.x, cFirstPt.cPoint.y, 0, false);*/
-    }
-    return (m_pInputPoints->GetCount(-1) == 2);
-}
-
-bool CDObject::AddGroupPoint(double x, double y, char iCtrl)
-{
-    switch(m_iSubType)
-    {
-    case dstRectangle:
-        return AddRectanglePoint(x, y, iCtrl);
-    default:
-        return false;
-    }
 }
 
 void CDObject::RemoveLastPoint()
@@ -239,35 +140,6 @@ void CDObject::Redo()
     m_pUndoPoints->Remove(iCnt - 1, -1);
 }
 
-bool CDObject::BuildGroupCache(CDLine cTmpPt, int iMode)
-{
-    if(m_iDataLen < 1) return false;
-
-    PDObject pObj = m_pGroupObjects[0];
-    bool bRes = pObj->BuildCache(cTmpPt, iMode);
-    if(iMode == 2)
-    {
-        pObj->GetDynValue(cTmpPt.cOrigin, 2, &m_dMovedDist);
-        double dMoveDist;
-        for(int i = 1; i < m_iDataLen; i++)
-        {
-            pObj = m_pGroupObjects[i];
-            bRes &= pObj->BuildCache(cTmpPt, iMode);
-            pObj->GetDynValue(cTmpPt.cOrigin, 2, &dMoveDist);
-            if(fabs(dMoveDist) < fabs(m_dMovedDist)) m_dMovedDist = dMoveDist;
-        }
-    }
-    else
-    {
-        for(int i = 1; i < m_iDataLen; i++)
-        {
-            pObj = m_pGroupObjects[i];
-            bRes &= pObj->BuildCache(cTmpPt, iMode);
-        }
-    }
-    return bRes;
-}
-
 bool CDObject::BuildCache(CDLine cTmpPt, int iMode)
 {
     switch(m_iType)
@@ -288,15 +160,9 @@ bool CDObject::BuildCache(CDLine cTmpPt, int iMode)
         return BuildSplineCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, &m_dMovedDist);
     case dtEvolvent:
         return BuildEvolvCache(cTmpPt, iMode, m_pInputPoints, m_pCachePoints, m_cLines, &m_dMovedDist);
-    case dtGroup:
-        return BuildGroupCache(cTmpPt, iMode);
     default:
         return false;
     }
-}
-
-void CDObject::AddGroupSegment(double dStart, double dEnd, PDRect pRect)
-{
 }
 
 void CDObject::AddCurveSegment(double dStart, double dEnd, PDRect pRect)
@@ -326,9 +192,6 @@ void CDObject::AddCurveSegment(double dStart, double dEnd, PDRect pRect)
         break;
     case dtEvolvent:
         AddEvolvSegment(dStart, dEnd, m_pCachePoints, m_pPrimitive, pRect);
-        break;
-    case dtGroup:
-        AddGroupSegment(dStart, dEnd, pRect);
         break;
     }
 }
@@ -531,9 +394,6 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
     case dtEvolvent:
         iRes = BuildEvolvPrimitives(cTmpPt, iMode, &cRect, m_pInputPoints, m_pCachePoints,
             plPrimitive, m_cLines, m_cBounds, dExt, &m_dMovedDist, &cBnds, iTemp == 1);
-        break;
-    case dtGroup:
-        iRes = 0;
         break;
     }
 
@@ -1096,8 +956,6 @@ bool CDObject::IsNearPoint(CDPoint cPt, double dTolerance, int *piDimen)
     case dtEvolvent:
         dDist = GetEvolvDistFromPt(cPt, cPt, m_pCachePoints, &cPtX);
         break;
-    case dtGroup:
-        break;
     }
 
     PDDimension pDim;
@@ -1191,8 +1049,6 @@ bool CDObject::GetNativeRefPoint(double dRef, PDPoint pPt)
         return GetSplineRefPoint(dRef, m_pCachePoints, pPt);
     case dtEvolvent:
         return GetEvolvRefPoint(dRef, m_pCachePoints, pPt);
-    case dtGroup:
-        return false;
     default:
         return false;
     }
@@ -1218,8 +1074,6 @@ bool CDObject::GetNativeRefDir(double dRef, PDPoint pPt)
         return GetSplineRefDir(dRef, m_pCachePoints, pPt);
     case dtEvolvent:
         return GetEvolvRefDir(dRef, m_pCachePoints, pPt);
-    case dtGroup:
-        return false;
     default:
         return false;
     }
@@ -1366,8 +1220,6 @@ bool CDObject::HasEnoughPoints()
         return(HasSplineEnoughPoints(m_pInputPoints));
     case dtEvolvent:
         return(HasEvolvEnoughPoints(m_pInputPoints, iInputLines));
-    case dtGroup:
-        return false;
     default:
         return false;
     }
@@ -1477,8 +1329,6 @@ double CDObject::GetDistFromPt(CDPoint cPt, CDPoint cRefPt, bool bSnapCenters, P
         break;
     case dtEvolvent:
         dRes = GetEvolvDistFromPt(cPt, cRefPt, m_pCachePoints, &cPtX);
-        break;
-    case dtGroup:
         break;
     }
 
@@ -1613,8 +1463,6 @@ bool CDObject::GetRestrictPoint(CDPoint cPt, int iMode, bool bRestrictSet, doubl
         return GetSplineRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
     case dtEvolvent:
         return GetEvolvRestrictPoint(cPt, iMode, dRestrictValue, pSnapPt, m_pCachePoints);
-    case dtGroup:
-        return false;
     default:
         return false;
     }
@@ -2284,8 +2132,6 @@ double CDObject::GetRadiusAtPt(CDLine cPtX, PDLine pPtR, bool bNewPt)
         return GetSplineRadiusAtPt(cPtX, m_pCachePoints, pPtR, bNewPt);
     case dtEvolvent:
         return GetEvolvRadiusAtPt(cPtX, m_pCachePoints, pPtR, bNewPt);
-    case dtGroup:
-        return -1.0;
     default:
         return -1.0;
     }
@@ -2682,8 +2528,6 @@ bool CDObject::GetPointRefDist(double dRef, double *pdDist)
         return GetSplinePointRefDist(dRef, m_pCachePoints, pdDist);
     case dtEvolvent:
         return GetEvolvPointRefDist(dRef, m_pCachePoints, pdDist);
-    case dtGroup:
-        return false;
     default:
         return false;
     }

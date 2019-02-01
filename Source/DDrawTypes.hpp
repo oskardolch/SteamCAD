@@ -14,8 +14,7 @@ enum CDDrawType
     dtHyperbola = 5,
     dtParabola = 6,
     dtSpline = 7,
-    dtEvolvent = 8,
-    dtGroup = 100
+    dtEvolvent = 8
 };
 
 enum CDDrawSubType
@@ -27,12 +26,7 @@ enum CDDrawSubType
 typedef class CDObject
 {
 private:
-    int m_iDataSize;
-    int m_iDataLen;
-    CDObject **m_pGroupObjects;
-
     CDDrawType m_iType;
-    CDDrawSubType m_iSubType;
     CDLine m_cLines[2];
     CDRefPoint m_cBounds[2];
     PDPointList m_pInputPoints;
@@ -81,16 +75,9 @@ private:
     int AddDimenPrimitive(int iPos, PDDimension pDim, PDPrimObject pPrimitive, PDRect pRect);
     void SwapBounds();
     bool RemovePart(bool bDown, PDRefPoint pBounds);
-    void ClearGroups();
-    void AddChild(CDObject *pObj);
-    bool AddRectanglePoint(double x, double y, char iCtrl);
-    bool AddGroupPoint(double x, double y, char iCtrl);
-    bool BuildGroupCache(CDLine cTmpPt, int iMode);
-    void AddGroupSegment(double dStart, double dEnd, PDRect pRect);
 public:
     CDObject(CDDrawType iType, double dWidth);
     ~CDObject();
-    void SetSubType(CDDrawSubType iSubType);
     bool AddPoint(double x, double y, char iCtrl, bool bFromGui); // returns true if the point is the last point
     void RemoveLastPoint();
     void Undo();
