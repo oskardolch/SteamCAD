@@ -71,7 +71,7 @@ void fsd_fontattrchb_toggled(GtkToggleButton *togglebutton, PFsdGridEdtData pDat
 
 // CDFileSetupDlg
 
-CDFileSetupDlg::CDFileSetupDlg(gchar *sAppPath)
+CDFileSetupDlg::CDFileSetupDlg()
 {
     m_iX = -100;
     m_iY = -100;
@@ -79,8 +79,8 @@ CDFileSetupDlg::CDFileSetupDlg(gchar *sAppPath)
     m_iPaperSizes = 0;
     m_bSettingUp = false;
     m_pUnits = new CDUnitList();
-    BuildLenUnitsList(sAppPath);
-    BuildPaperSizeList(sAppPath);
+    BuildLenUnitsList();
+    BuildPaperSizeList();
 }
 
 CDFileSetupDlg::~CDFileSetupDlg()
@@ -700,7 +700,7 @@ bool ReadLine(FILE *fp, gchar *sBuf, int iBufSize)
     return (iPos > 0);
 }
 
-void CDFileSetupDlg::BuildPaperSizeList(gchar *sAppPath)
+void CDFileSetupDlg::BuildPaperSizeList()
 {
 	const gchar *homedir = g_get_home_dir();
 	gchar *sFile = g_strconcat(homedir, "/.SteamCAD/DPapers.ini", NULL);
@@ -797,7 +797,7 @@ void CDFileSetupDlg::BuildPaperSizeList(gchar *sAppPath)
     fclose(fp);
 }
 
-void CDFileSetupDlg::BuildLenUnitsList(gchar *sAppPath)
+void CDFileSetupDlg::BuildLenUnitsList()
 {
 	const gchar *homedir = g_get_home_dir();
 	gchar *sFile = g_strconcat(homedir, "/.SteamCAD/DUnits.ini", NULL);

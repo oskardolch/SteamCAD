@@ -99,11 +99,11 @@ private:
     GtkWidget *m_pBaseLab;
     GtkWidget *m_pFntSampleLab;
 
-    void BuildPaperSizeList(gchar *sAppPath);
-    void BuildLenUnitsList(gchar *sAppPath);
+    void BuildPaperSizeList();
+    void BuildLenUnitsList();
     int SetupUnitCB(GtkComboBoxText *pCB, int iType, PDFileUnit pFileUnit);
 public:
-    CDFileSetupDlg(gchar *sAppPath);
+    CDFileSetupDlg();
     ~CDFileSetupDlg();
     gboolean ShowDialog(GtkWidget *pWndParent, PDFileSetupRec pFSR);
     void SaveSettings(FILE *fp);

@@ -127,6 +127,7 @@ public:
     double GetNearestCrossPoint(CDPoint cPt, PDPoint pPt);
     double GetNearestBoundPoint(CDPoint cPt, PDPoint pPt);
     bool AddDimen(CDPoint cPt, double dDist, PDRect pRect, PDFileAttrs pAttrs);
+    void DiscardDimen();
     void AddDimenPtr(PDDimension pDimen);
     int GetDimenCount();
     PDDimension GetDimen(int iPos);
@@ -189,7 +190,7 @@ public:
     int GetSelectedLineStyle(PDLineStyle pStyle);
     bool SetSelectedLineStyle(int iMask, PDLineStyle pStyle, PDPtrList pRegions);
     bool SetCrossSelected(CDPoint cPt, double dDist, PDRect pRect, PDPtrList pRegions);
-    bool AddDimen(CDPoint cPt, double dDist, PDRect pRect, PDPtrList pRegions);
+    bool AddDimen(PDObject pSelForDiment, CDPoint cPt, double dDist, PDRect pRect, PDPtrList pRegions);
     bool GetChanged();
     void SetChanged();
     void SetFileAttrs(PDFileAttrs pFileAttrs, bool bNewFile);

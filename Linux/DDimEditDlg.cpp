@@ -319,6 +319,12 @@ bool CDDimEditDlg::ShowDialog(GtkWidget *pWndParent, PDDimension pDimen, PDUnitL
     gtk_table_attach_defaults(GTK_TABLE(pTbl), m_pFntSampleLab, 0, 1, 1, 3);
     gtk_widget_show(m_pFntSampleLab);
 
+    PangoFontDescription *ppfd = pango_font_description_from_string(
+        gtk_font_button_get_font_name(GTK_FONT_BUTTON(m_pFntFaceCB)));
+    pango_font_description_set_size(ppfd, 12288);
+    gtk_widget_modify_font(m_pFntSampleLab, ppfd);
+    pango_font_description_free(ppfd);
+
     gtk_widget_grab_default(pBtn);
     gtk_window_set_default(GTK_WINDOW(m_pDlg), pBtn);
 

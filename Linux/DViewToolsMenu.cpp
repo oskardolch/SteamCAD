@@ -16,6 +16,31 @@ static void view_actsize_click(PDApplication pApp)
     return;
 }
 
+static void view_grpoints_click(PDApplication pApp)
+{
+    pApp->ViewCommand(IDM_VIEWGRIDPTS, false);
+    return;
+}
+
+static void view_grpoints_accel(PDApplication pApp)
+{
+    pApp->ViewCommand(IDM_VIEWGRIDPTS, true);
+    return;
+}
+
+static void view_grlines_click(PDApplication pApp)
+{
+    pApp->ViewCommand(IDM_VIEWGRIDLNS, false);
+    return;
+}
+
+static void view_grlines_accel(PDApplication pApp)
+{
+    pApp->ViewCommand(IDM_VIEWGRIDLNS, true);
+    return;
+}
+
+
 static void tools_knife_click(PDApplication pApp)
 {
     pApp->ToolsCommand(IDM_TOOLSKNIFE, false);
@@ -109,6 +134,8 @@ void CreateViewMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
 
     GtkWidget *menu_item;
     GtkStockItem gtkSI;
+    GClosure *pClos;
+    GtkWidget *menu_label;
 
     if(gtk_stock_lookup(GTK_STOCK_ZOOM_FIT, &gtkSI))
     {
@@ -132,6 +159,30 @@ void CreateViewMenu(void *pPtr, GtkMenuShell *pMenuBar, GtkAccelGroup *pAccel)
     }
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
     g_signal_connect_swapped(G_OBJECT(menu_item), "activate", G_CALLBACK(view_actsize_click), pApp);
+    gtk_widget_show(menu_item);
+
+    menu_item = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_widget_show(menu_item);
+
+    menu_item = gtk_check_menu_item_new_with_mnemonic(_("Show Grid _Points"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+
+    pClos = g_cclosure_new_swap(G_CALLBACK(view_grpoints_accel), pApp, NULL);
+    gtk_accel_group_connect(pAccel, GDK_G, GDK_MOD1_MASK, GTK_ACCEL_MASK, pClos);
+    menu_label = gtk_bin_get_child(GTK_BIN(menu_item));
+    gtk_accel_label_set_accel_closure(GTK_ACCEL_LABEL(menu_label), pClos);
+    g_signal_connect_swapped(G_OBJECT(menu_item), "activate", G_CALLBACK(view_grpoints_click), pApp);
+    gtk_widget_show(menu_item);
+
+    menu_item = gtk_check_menu_item_new_with_mnemonic(_("Show Grid _Lines"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+
+    pClos = g_cclosure_new_swap(G_CALLBACK(view_grlines_accel), pApp, NULL);
+    gtk_accel_group_connect(pAccel, GDK_G, GDK_CONTROL_MASK, GTK_ACCEL_MASK, pClos);
+    menu_label = gtk_bin_get_child(GTK_BIN(menu_item));
+    gtk_accel_label_set_accel_closure(GTK_ACCEL_LABEL(menu_label), pClos);
+    g_signal_connect_swapped(G_OBJECT(menu_item), "activate", G_CALLBACK(view_grlines_click), pApp);
     gtk_widget_show(menu_item);
 
     char buf[128];

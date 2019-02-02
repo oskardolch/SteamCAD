@@ -2657,6 +2657,11 @@ bool CDObject::AddDimen(CDPoint cPt, double dDist, PDRect pRect, PDFileAttrs pAt
     return true;
 }
 
+void CDObject::DiscardDimen()
+{
+    if(m_bFirstDimSet) m_bFirstDimSet = false;
+}
+
 void CDObject::AddDimenPtr(PDDimension pDimen)
 {
     m_pDimens->Add(pDimen);
@@ -4186,23 +4191,15 @@ bool CDataList::SetCrossSelected(CDPoint cPt, double dDist, PDRect pRect, PDPtrL
     return bRes;
 }
 
-bool CDataList::AddDimen(CDPoint cPt, double dDist, PDRect pRect, PDPtrList pRegions)
+bool CDataList::AddDimen(PDObject pSelForDiment, CDPoint cPt, double dDist, PDRect pRect, PDPtrList pRegions)
 {
-    bool bFound = false;
-    int i = 0;
-    PDObject pObj;
-    while(!bFound && (i < m_iDataLen))
-    {
-        pObj = m_ppObjects[i++];
-        bFound = pObj->GetSelected();
-    }
-    if(!bFound) return false;
+    if(!pSelForDiment) return false;
 
-    bool bRes = pObj->AddDimen(cPt, dDist, pRect, &m_cFileAttrs);
+    bool bRes = pSelForDiment->AddDimen(cPt, dDist, pRect, &m_cFileAttrs);
     if(bRes)
     {
         m_bHasChanged = true;
-        pObj->AddRegions(pRegions, -1);
+        pSelForDiment->AddRegions(pRegions, -1);
     }
     return bRes;
 }

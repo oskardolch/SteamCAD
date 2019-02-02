@@ -146,12 +146,10 @@ void CDApplication::CopyIniFiles(const char *psConfDir)
     g_free(cnfdir);
 }
 
-CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
+CDApplication::CDApplication(const char *psConfDir)
 {
     if(psConfDir) CopyIniFiles(psConfDir);
 
-    strcpy(m_sAppPath, psAppPath);
-	
     m_bSettingProps = false;
     m_pStatLab1 = NULL;
 
@@ -250,6 +248,7 @@ CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
     m_sFileName = NULL;
     m_pActiveObject = NULL;
     m_pHighObject = NULL;
+    m_pSelForDimen = NULL;
     m_iRedoCount = 0;
 
     strcpy(m_cFSR.cPaperSize.sPaperSizeName, "A4");
@@ -316,12 +315,13 @@ CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
     m_cMeasPoint1.bIsSet = false;
     m_cMeasPoint2.bIsSet = false;
     m_bPaperUnits = FALSE;
+    m_iDrawGridMode = 0;
 
     m_sStatus2Msg[0] = 0;
     m_iRestrictSet = -1;
     m_iLastExportType = 0;
 
-    m_pFileSetupDlg = new CDFileSetupDlg(m_sAppPath);
+    m_pFileSetupDlg = new CDFileSetupDlg();
     m_pLineStyleDlg = new CDLineStyleDlg();
     m_pDimEditDlg = new CDDimEditDlg();
     m_pStatDlg = new CDStatDlg();
@@ -333,11 +333,22 @@ CDApplication::CDApplication(const char *psConfDir, const char *psAppPath)
     m_bSettingProps = true;
     GtkWidget *menu = GetMenuBar();
     pChilds = gtk_container_get_children(GTK_CONTAINER(menu));
+
     GtkWidget *edit_menu = (GtkWidget*)g_list_nth(pChilds, 2)->data;
     GtkWidget *edit_top = (GtkWidget*)gtk_menu_item_get_submenu(GTK_MENU_ITEM(edit_menu));
-    pChilds = gtk_container_get_children(GTK_CONTAINER(edit_top));
-    GtkWidget *menu_item = (GtkWidget*)g_list_nth(pChilds, 7)->data;
+    GList *pMenuChilds = gtk_container_get_children(GTK_CONTAINER(edit_top));
+    GtkWidget *menu_item = (GtkWidget*)g_list_nth(pMenuChilds, 7)->data;
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), m_bPaperUnits);
+
+    edit_menu = (GtkWidget*)g_list_nth(pChilds, 3)->data;
+    edit_top = (GtkWidget*)gtk_menu_item_get_submenu(GTK_MENU_ITEM(edit_menu));
+    pMenuChilds = gtk_container_get_children(GTK_CONTAINER(edit_top));
+    menu_item = (GtkWidget*)g_list_nth(pMenuChilds, 3)->data;
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), m_iDrawGridMode & 1);
+
+    menu_item = (GtkWidget*)g_list_nth(pMenuChilds, 4)->data;
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), m_iDrawGridMode & 2);
+
     m_bSettingProps = false;
 
     if(fabs(m_cFSR.dScaleDenom) > g_dPrec)
@@ -394,6 +405,19 @@ GtkWidget* CDApplication::GetMainWindow()
     return(m_pMainWnd);
 }
 
+int od_find_attr(const gchar **attribute_names, const gchar *attr_name)
+{
+    int i = 0;
+    bool bFound = false;
+    const gchar *pAttr = attribute_names[i++];
+    while(!bFound && pAttr)
+    {
+        bFound = (g_strcmp0(pAttr, attr_name) == 0);
+        pAttr = attribute_names[i++];
+    }
+    return bFound ? i - 2 : -1;
+}
+
 void od_start_elem(GMarkupParseContext *context, const gchar *element_name,
     const gchar **attribute_names, const gchar **attribute_values,
     gpointer user_data, GError **error)
@@ -416,26 +440,38 @@ void od_start_elem(GMarkupParseContext *context, const gchar *element_name,
     }
     else if(g_strcmp0(element_name, "DrawSettings") == 0)
     {
-        sscanf(attribute_values[0], "%d", &left);
-        sscanf(attribute_values[1], "%d", &top);
-        pApp->SetDrawSettings(left, top, attribute_values[2]);
+        i = od_find_attr(attribute_names, "PaperUnits");
+        if(i < 0) left = 0;
+        else sscanf(attribute_values[i], "%d", &left);
+
+        i = od_find_attr(attribute_names, "LastExportType");
+        if(i < 0) top = 0;
+        else sscanf(attribute_values[i], "%d", &top);
+
+        i = od_find_attr(attribute_names, "DrawGridMode");
+        if(i < 0) width = 0;
+        else sscanf(attribute_values[i], "%d", &width);
+
+        i = od_find_attr(attribute_names, "LastPath");
+        if(i < 0) pApp->SetDrawSettings(left, top, width, NULL);
+        else pApp->SetDrawSettings(left, top, width, attribute_values[i]);
     }
     else if(g_strcmp0(element_name, "PageSettings") == 0)
     {
         sscanf(attribute_values[0], "%d", &i);
-            cFSR.bPortrait = i;
+        cFSR.bPortrait = i;
         sscanf(attribute_values[1], "%f", &f);
-            cFSR.dScaleNomin = f;
+        cFSR.dScaleNomin = f;
         sscanf(attribute_values[2], "%f", &f);
-            cFSR.dScaleDenom = f;
+        cFSR.dScaleDenom = f;
         sscanf(attribute_values[3], "%f", &f);
-            cFSR.dAngGrid = f;
+        cFSR.dAngGrid = f;
         sscanf(attribute_values[4], "%f", &f);
-            cFSR.dXGrid = f;
+        cFSR.dXGrid = f;
         sscanf(attribute_values[5], "%f", &f);
-            cFSR.dYGrid = f;
+        cFSR.dYGrid = f;
         sscanf(attribute_values[6], "%f", &f);
-            cFSR.dDefLineWidth = f;
+        cFSR.dDefLineWidth = f;
         pApp->SetPageSettings(&cFSR);
     }
     else if(g_strcmp0(element_name, "PaperSize") == 0)
@@ -606,7 +642,7 @@ void CDApplication::SaveSettings()
         x, y, dx, dy, igr);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-    g_sprintf(sbuf, "  <DrawSettings PaperUnits=\"%d\" LastExportType=\"%d\"\n", m_bPaperUnits, m_iLastExportType);
+    g_sprintf(sbuf, "  <DrawSettings PaperUnits=\"%d\" LastExportType=\"%d\" DrawGridMode=\"%d\"\n", m_bPaperUnits, m_iLastExportType, m_iDrawGridMode);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
     if(m_sLastPath)	g_sprintf(sbuf, "    LastPath=\"%s\"/>\n", m_sLastPath);
@@ -702,10 +738,13 @@ void CDApplication::SetScaleDlg(gint iLeft, gint iTop)
     m_pScaleDlg->RestoreSettings(iLeft, iTop);
 }
 
-void CDApplication::SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, const gchar *sPath)
+void CDApplication::SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, gint iDrawGridMode, const gchar *sPath)
 {
     m_bPaperUnits = bPaperUnits;
     m_iLastExportType = iLastExportType;
+    m_iDrawGridMode = iDrawGridMode;
+    if(!sPath) return;
+
     int iLen = strlen(sPath);
     if(iLen > 0)
     {
@@ -1484,9 +1523,84 @@ void CDApplication::Paint(GtkWidget *widget, GdkEventExpose *event)
     cairo_rectangle(cr, event->area.x, event->area.y, event->area.width, event->area.height);
     cairo_fill(cr);
 
-    cairo_set_source_rgb(cr, 0.5, 0.3, 0.0);
     cairo_set_line_width(cr, 1.0);
 
+    if(m_iDrawGridMode > 0)
+    {
+        double dx = m_dUnitScale*m_cFSR.dXGrid;
+        double dy = m_dUnitScale*m_cFSR.dYGrid;
+        if((dx > 5) && (dy > 5))
+        {
+            int iMin = -m_cViewOrigin.x/m_dUnitScale/m_cFSR.dXGrid;
+            int iMax = (iWidth - m_cViewOrigin.x)/m_dUnitScale/m_cFSR.dXGrid;
+            int jMin = -m_cViewOrigin.y/m_dUnitScale/m_cFSR.dYGrid;
+            int jMax = (iHeight - m_cViewOrigin.y)/m_dUnitScale/m_cFSR.dYGrid;
+
+            double dGray;
+
+            if(m_iDrawGridMode & 2)
+            {
+                if((dx < 200) || (dy < 200))
+                {
+                    if(dx < dy) dGray = 0.7 + 0.2*(200.0 - dx)/195.0;
+                    else dGray = 0.7 + 0.2*(200.0 - dy)/195.0;
+                }
+                else dGray = 0.7;
+
+                cairo_set_source_rgb(cr, dGray, dGray, dGray);
+                cairo_new_path(cr);
+                for(int i = iMin; i <= iMax; i++)
+                {
+                    dx = m_cViewOrigin.x + (double)i*m_dUnitScale*m_cFSR.dXGrid;
+                    cairo_move_to(cr, dx, 0.0);
+                    cairo_line_to(cr, dx, iHeight);
+                }
+                for(int j = jMin; j <= jMax; j++)
+                {
+                    dy = m_cViewOrigin.y + (double)j*m_dUnitScale*m_cFSR.dYGrid;
+                    cairo_move_to(cr, 0.0, dy);
+                    cairo_line_to(cr, iWidth, dy);
+                }
+                cairo_stroke(cr);
+            }
+
+            if(m_iDrawGridMode & 1)
+            {
+                if(m_iDrawGridMode & 2)
+                {
+                    if((dx < 200) || (dy < 200))
+                    {
+                        if(dx < dy) dGray = 0.5 + 0.5*(200.0 - dx)/195.0;
+                        else dGray = 0.5 + 0.5*(200.0 - dy)/195.0;
+                    }
+                    else dGray = 0.5;
+                }
+                else
+                {
+                    if((dx < 200) || (dy < 200))
+                    {
+                        if(dx < dy) dGray = 0.3 + 0.3*(200.0 - dx)/195.0;
+                        else dGray = 0.3 + 0.3*(200.0 - dy)/195.0;
+                    }
+                    else dGray = 0.3;
+                }
+
+                cairo_set_source_rgb(cr, dGray, dGray, dGray);
+                for(int i = iMin; i <= iMax; i++)
+                {
+                    dx = m_cViewOrigin.x + (double)i*m_dUnitScale*m_cFSR.dXGrid;
+                    for(int j = jMin; j <= jMax; j++)
+                    {
+                        dy = m_cViewOrigin.y + (double)j*m_dUnitScale*m_cFSR.dYGrid;
+                        cairo_arc(cr, dx, dy, 1.0, 0.0, 2.0*M_PI);
+                        cairo_fill(cr);
+                    }
+                }
+            }
+        }
+    }
+
+    cairo_set_source_rgb(cr, 0.5, 0.3, 0.0);
     cairo_new_path(cr);
     cairo_rectangle(cr, m_cViewOrigin.x, m_cViewOrigin.y, m_dUnitScale*m_dwPage, m_dUnitScale*m_dhPage);
     cairo_stroke(cr);
@@ -2289,6 +2403,11 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
         delete m_pActiveObject;
         m_pActiveObject = NULL;
     }
+    else if(m_pSelForDimen)
+    {
+        m_pSelForDimen->DiscardDimen();
+        m_pSelForDimen = NULL;
+    }
 
     GtkWidget *draw = GetDrawing();
     cairo_t *cr = gdk_cairo_create(draw->window);
@@ -2346,20 +2465,32 @@ void CDApplication::SetMode(int iNewMode, bool bFromAccel)
 
 void CDApplication::SetTool(int iNewTool)
 {
-    if((iNewTool == tolDimen) && (m_pDrawObjects->GetSelectCount() != 1))
-    {
-        GtkWidget *msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pMainWnd), GTK_DIALOG_MODAL,
-            GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
-            _("Exactly one object must be selected to insert a dimension"));
-        gtk_dialog_run(GTK_DIALOG(msg_dlg));
-        gtk_widget_destroy(msg_dlg);
-        return;
-    }
-
     if(m_pActiveObject)
     {
         delete m_pActiveObject;
         m_pActiveObject = NULL;
+    }
+    else if(m_pSelForDimen)
+    {
+        m_pSelForDimen->DiscardDimen();
+        m_pSelForDimen = NULL;
+    }
+
+    m_iDrawMode = modSelect;
+    m_iToolMode = tolNone;
+
+    if(iNewTool == tolDimen)
+    {
+        if(m_pDrawObjects->GetSelectCount() != 1)
+        {
+            GtkWidget *msg_dlg = gtk_message_dialog_new(GTK_WINDOW(m_pMainWnd), GTK_DIALOG_MODAL,
+                GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
+                _("Exactly one object must be selected to insert a dimension"));
+            gtk_dialog_run(GTK_DIALOG(msg_dlg));
+            gtk_widget_destroy(msg_dlg);
+            return;
+        }
+        else m_pSelForDimen = m_pDrawObjects->GetSelected(0);
     }
 
     GtkWidget *draw = GetDrawing();
@@ -2373,7 +2504,6 @@ void CDApplication::SetTool(int iNewTool)
     cairo_destroy(cr);
 
     m_iToolMode = iNewTool;
-    m_iDrawMode = modSelect;
 
     StartNewObject(TRUE);
 }
@@ -2751,6 +2881,12 @@ void CDApplication::ViewCommand(int iCmd, bool bFromAccel)
     case IDM_VIEWACTSIZE:
         ViewNormalCmd(m_pMainWnd);
         break;
+    case IDM_VIEWGRIDPTS:
+        ViewGridCmd(m_pMainWnd, bFromAccel, 1);
+        break;
+    case IDM_VIEWGRIDLNS:
+        ViewGridCmd(m_pMainWnd, bFromAccel, 2);
+        break;
     }
     return;
 }
@@ -2858,6 +2994,29 @@ void CDApplication::ViewNormalCmd(GtkWidget *widget)
     m_cViewOrigin.y = (int)(ddy - cOrigOff.y*m_dUnitScale);
 
     gdk_window_invalidate_rect(draw->window, NULL, FALSE);
+}
+
+void CDApplication::ViewGridCmd(GtkWidget *widget, bool bFromAccel, int iFlag)
+{
+    if(m_bSettingProps) return;
+
+    gboolean bUncheck = (m_iDrawGridMode & iFlag);
+    if(bFromAccel)
+    {
+        GtkWidget *menu = GetMenuBar();
+        GList *pChilds = gtk_container_get_children(GTK_CONTAINER(menu));
+        GtkWidget *edit_menu = (GtkWidget*)g_list_nth(pChilds, 3)->data;
+        GtkWidget *edit_top = (GtkWidget*)gtk_menu_item_get_submenu(GTK_MENU_ITEM(edit_menu));
+        pChilds = gtk_container_get_children(GTK_CONTAINER(edit_top));
+        GtkWidget *menu_item = (GtkWidget*)g_list_nth(pChilds, iFlag + 2)->data;
+        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), !bUncheck);
+    }
+    else
+    {
+        if(bUncheck) m_iDrawGridMode &= ~iFlag;
+        else m_iDrawGridMode |= iFlag;
+        gdk_window_invalidate_rect(GetDrawing()->window, NULL, FALSE);
+    }
 }
 
 int CDApplication::GetDynMode()
@@ -3718,7 +3877,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
         }
         else if(m_iToolMode == tolDimen)
         {
-            if(m_pDrawObjects->AddDimen(m_cLastDrawPt, dTol, &cdr, pRegions))
+            if(m_pDrawObjects->AddDimen(m_pSelForDimen, m_cLastDrawPt, dTol, &cdr, pRegions))
             {
                 bUpdate = TRUE;
                 if(GetUpdateRegion(pRegions, &cRect))

@@ -15,7 +15,6 @@ typedef class CDApplication
 {
 private:
     GtkWidget *m_pMainWnd;
-    char m_sAppPath[32];
     gint m_iLeft, m_iTop, m_iWidth, m_iHeight;
     GdkGravity m_grav;
     double m_dDeviceToUnitScale;
@@ -28,6 +27,7 @@ private:
     bool m_bHasChanged;
     PDObject m_pActiveObject;
     PDObject m_pHighObject;
+    PDObject m_pSelForDimen;
     int m_iHighDimen;
     int m_iRedoCount;
     CDFileSetupRec m_cFSR;
@@ -51,6 +51,7 @@ private:
     int m_iToolMode;
     int m_iSelectTolerance;
     int m_iSnapTolerance;
+    int m_iDrawGridMode;
     cairo_surface_t *m_pcs;
     cairo_pattern_t *m_pcp;
     gboolean m_bRenderDirect;
@@ -120,6 +121,7 @@ private:
 
     void ViewFitCmd(GtkWidget *widget);
     void ViewNormalCmd(GtkWidget *widget);
+    void ViewGridCmd(GtkWidget *widget, bool bFromAccel, int iFlag);
 
     bool PromptForSave(GtkWidget *widget);
     bool SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly);
@@ -152,7 +154,7 @@ private:
     void StartNewObject(gboolean bShowEdit);
     void CopyIniFiles(const char *psConfDir);
 public:	
-    CDApplication(const char *psConfDir, const char *psAppPath);
+    CDApplication(const char *psConfDir);
     ~CDApplication();
     GtkWidget* GetMainWindow();
     void SetPosition(gint iLeft, gint iTop, gint iWidth, gint iHeight, GdkGravity iGrav);
@@ -162,7 +164,7 @@ public:
     void SetStatDlg(gint iLeft, gint iTop);
     void SetSnapDlg(gint iLeft, gint iTop);
     void SetScaleDlg(gint iLeft, gint iTop);
-    void SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, const gchar *sPath);
+    void SetDrawSettings(gboolean bPaperUnits, gint iLastExportType, gint iDrawGridMode, const gchar *sPath);
     gboolean Terminate();
     void SetPageSettings(PDFileSetupRec pFSR);
     void SetPaperSize(PDFileSetupRec pFSR);
