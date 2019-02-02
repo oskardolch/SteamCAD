@@ -106,8 +106,9 @@ CMainWnd::CMainWnd(HINSTANCE hInstance)
     //m_hToolBar = 0;
     m_hStatus = 0;
 
-    m_iDrawMode = 0;
+    m_iDrawMode = modSelect;
     m_iButton = 0;
+    m_iToolMode = tolNone;
 
     m_cViewOrigin.x = 0;
     m_cViewOrigin.y = 0;
@@ -129,8 +130,9 @@ CMainWnd::CMainWnd(HINSTANCE hInstance)
 
     m_pActiveObject = NULL;
     m_pHighObject = NULL;
-    m_iToolMode = 0;
+    m_pSelForDimen = NULL;
     m_bPaperUnits = false;
+    m_iDrawGridMode = 0;
     m_iHighDimen = -2;
 
     wcscpy(m_cFSR.cPaperSize.wsPaperSizeName, L"A4");
@@ -242,6 +244,16 @@ HWND CMainWnd::DisplayWindow()
     if(m_bPaperUnits) uCheck |= MF_CHECKED;
     else uCheck |= MF_UNCHECKED;
     CheckMenuItem(hMenu, IDM_EDITPAPERUNITS, uCheck);
+
+    uCheck = MF_BYCOMMAND;
+    if(m_iDrawGridMode & 1) uCheck |= MF_CHECKED;
+    else uCheck |= MF_UNCHECKED;
+    CheckMenuItem(hMenu, IDM_VIEWGRIDPTS, uCheck);
+
+    uCheck = MF_BYCOMMAND;
+    if(m_iDrawGridMode & 2) uCheck |= MF_CHECKED;
+    else uCheck |= MF_UNCHECKED;
+    CheckMenuItem(hMenu, IDM_VIEWGRIDLNS, uCheck);
     return(m_hWnd);
 }
 
@@ -341,17 +353,25 @@ LRESULT CMainWnd::WMCommand(HWND hwnd, WORD wNotifyCode, WORD wID, HWND hwndCtl)
         m_pHighObject->SetSnapTo(false);
         return 0;
     case IDM_MODESELECT:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modSelect));
     case IDM_MODELINE:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modLine));
     case IDM_MODECIRCLE:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modCircle));
     case IDM_MODEELLIPSE:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modEllipse));
     case IDM_MODEARCELLIPSE:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modArcElps));
     case IDM_MODEHYPERBOLA:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modHyperbola));
     case IDM_MODEPARABOLA:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modParabola));
     case IDM_MODESPLINE:
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modSpline));
     case IDM_MODEEVEOLVENT:
-        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, wID - IDM_MODESELECT));
+        return(ModeCmd(hwnd, wNotifyCode, hwndCtl, modEvolvent));
     case IDM_MODEDIMEN:
-        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, 5));
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolDimen));
     case IDM_EDITCOPY:
         return(EditCopyCmd(hwnd, wNotifyCode, hwndCtl));
     case IDM_EDITCUT:
@@ -386,17 +406,25 @@ LRESULT CMainWnd::WMCommand(HWND hwnd, WORD wNotifyCode, WORD wID, HWND hwndCtl)
         return(ViewFitCmd(hwnd, wNotifyCode, hwndCtl));
     case IDM_VIEWACTSIZE:
         return(ViewActSizeCmd(hwnd, wNotifyCode, hwndCtl));
+    case IDM_VIEWGRIDPTS:
+        return(ViewGridCmd(hwnd, wNotifyCode, hwndCtl, 1));
+    case IDM_VIEWGRIDLNS:
+        return(ViewGridCmd(hwnd, wNotifyCode, hwndCtl, 2));
     /*case IDM_SNAPELEMENT:
     case IDM_SNAPENDPOINT:
     case IDM_SNAPMIDPOINT:
     case IDM_SNAPINTERSECT:
         return(SnapCmd(hwnd, wNotifyCode, hwndCtl, wID - IDM_SNAPELEMENT));*/
     case IDM_TOOLSKNIFE:
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolKnife));
     case IDM_TOOLSROUND:
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolRound));
     case IDM_TOOLSEXTEND:
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolExtend));
     case IDM_TOOLSCONFLICTS:
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolConflict));
     case IDM_TOOLSMEASURE:
-        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, wID - IDM_TOOLSKNIFE + 20));
+        return(ToolsCmd(hwnd, wNotifyCode, hwndCtl, tolMeas));
     case IDM_TOOLSBREAK:
         return(ToolsBreakCmd(hwnd, wNotifyCode, hwndCtl));
     case IDM_TOOLSCALE:
@@ -513,6 +541,7 @@ void CMainWnd::LoadSettings(HWND hwnd)
     {
         if(pRdr->GetIntValue(pElem, L"PaperUnits", &i)) m_bPaperUnits = i;
         if(pRdr->GetIntValue(pElem, L"LastExportType", &i)) m_iLastExportType = i;
+        if(pRdr->GetIntValue(pElem, L"DrawGridMode", &i)) m_iDrawGridMode = i;
 
         pElem->Release();
     }
@@ -635,6 +664,7 @@ void CMainWnd::SaveSettings(HWND hwnd)
     pElem = pWrit->CreateSection(L"DrawSettings");
     pWrit->AddIntValue(pElem, L"PaperUnits", (int)m_bPaperUnits);
     pWrit->AddIntValue(pElem, L"LastExportType", (int)m_iLastExportType);
+    pWrit->AddIntValue(pElem, L"DrawGridMode", (int)m_iDrawGridMode);
     pElem->Release();
 
     pElem = pWrit->CreateSection(L"PageSettings");
@@ -711,6 +741,98 @@ LRESULT CMainWnd::WMPaint(HWND hwnd, HDC hdc)
 
     HBRUSH hOldBr = (HBRUSH)SelectObject(ldc, GetStockObject(NULL_BRUSH));
     HPEN hOldPen = (HPEN)SelectObject(ldc, m_hBrownPen);
+
+    if(m_iDrawGridMode > 0)
+    {
+        double dx = m_dUnitScale*m_cFSR.dXGrid;
+        double dy = m_dUnitScale*m_cFSR.dYGrid;
+        int ix, iy;
+        if((dx > 5) && (dy > 5))
+        {
+            RECT cr;
+            GetClientRect(hwnd, &cr);
+            HPEN hlPen;
+
+            int iMin = -m_cViewOrigin.x/m_dUnitScale/m_cFSR.dXGrid;
+            int iMax = (cr.right - m_cViewOrigin.x)/m_dUnitScale/m_cFSR.dXGrid;
+            int jMin = -m_cViewOrigin.y/m_dUnitScale/m_cFSR.dYGrid;
+            int jMax = (cr.bottom - m_cViewOrigin.y)/m_dUnitScale/m_cFSR.dYGrid;
+
+            double dGray;
+            int iGray;
+
+            if(m_iDrawGridMode & 2)
+            {
+                if((dx < 200) || (dy < 200))
+                {
+                    if(dx < dy) dGray = 0.7 + 0.2*(200.0 - dx)/195.0;
+                    else dGray = 0.7 + 0.2*(200.0 - dy)/195.0;
+                }
+                else dGray = 0.7;
+                iGray = 255*dGray;
+
+                hlPen = CreatePen(PS_SOLID, 0, RGB(iGray, iGray, iGray));
+                SelectObject(ldc, hlPen);
+                for(int i = iMin; i <= iMax; i++)
+                {
+                    dx = m_cViewOrigin.x + (double)i*m_dUnitScale*m_cFSR.dXGrid;
+                    ix = Round(dx);
+                    MoveToEx(ldc, ix, 0, NULL);
+                    LineTo(ldc, ix, cr.bottom);
+                }
+                for(int j = jMin; j <= jMax; j++)
+                {
+                    dy = m_cViewOrigin.y + (double)j*m_dUnitScale*m_cFSR.dYGrid;
+                    iy = Round(dy);
+                    MoveToEx(ldc, 0, iy, NULL);
+                    LineTo(ldc, cr.right, iy);
+                }
+                SelectObject(ldc, hOldPen);
+                DeleteObject(hlPen);
+            }
+
+            if(m_iDrawGridMode & 1)
+            {
+                if(m_iDrawGridMode & 2)
+                {
+                    if((dx < 200) || (dy < 200))
+                    {
+                        if(dx < dy) dGray = 0.5 + 0.5*(200.0 - dx)/195.0;
+                        else dGray = 0.5 + 0.5*(200.0 - dy)/195.0;
+                    }
+                    else dGray = 0.5;
+                }
+                else
+                {
+                    if((dx < 200) || (dy < 200))
+                    {
+                        if(dx < dy) dGray = 0.3 + 0.3*(200.0 - dx)/195.0;
+                        else dGray = 0.3 + 0.3*(200.0 - dy)/195.0;
+                    }
+                    else dGray = 0.3;
+                }
+                iGray = 255*dGray;
+
+                hlPen = CreatePen(PS_SOLID, 0, RGB(iGray, iGray, iGray));
+                SelectObject(ldc, hlPen);
+                for(int i = iMin; i <= iMax; i++)
+                {
+                    dx = m_cViewOrigin.x + (double)i*m_dUnitScale*m_cFSR.dXGrid;
+                    ix = Round(dx);
+                    for(int j = jMin; j <= jMax; j++)
+                    {
+                        dy = m_cViewOrigin.y + (double)j*m_dUnitScale*m_cFSR.dYGrid;
+                        iy = Round(dy);
+                        Ellipse(ldc, ix - 1, iy - 1, ix + 2, iy + 2);
+                    }
+                }
+                SelectObject(ldc, hOldPen);
+                DeleteObject(hlPen);
+            }
+        }
+    }
+
+    SelectObject(ldc, m_hBrownPen);
     Rectangle(ldc, m_cViewOrigin.x, m_cViewOrigin.y,
         m_cViewOrigin.x + m_dUnitScale*m_dwPage, m_cViewOrigin.y + m_dUnitScale*m_dhPage);
 
@@ -750,7 +872,7 @@ LRESULT CMainWnd::WMPaint(HWND hwnd, HDC hdc)
         }
     }
 
-    if((m_iDrawMode > 0) || (m_iToolMode > 0))
+    if((m_iDrawMode > modSelect) || (m_iToolMode > tolNone))
     {
         int iPrevROP = SetROP2(ldc, R2_NOTXORPEN);
         SelectObject(ldc, m_hRedPen);
@@ -1146,6 +1268,31 @@ LRESULT CMainWnd::FileExitCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
     return 0;
 }
 
+UINT MapDrawModeToMenu(int iDrawMode)
+{
+    switch(iDrawMode)
+    {
+    case modLine:
+        return IDM_MODELINE;
+    case modCircle:
+        return IDM_MODECIRCLE;
+    case modEllipse:
+        return IDM_MODEELLIPSE;
+    case modArcElps:
+        return IDM_MODEARCELLIPSE;
+    case modHyperbola:
+        return IDM_MODEHYPERBOLA;
+    case modParabola:
+        return IDM_MODEPARABOLA;
+    case modSpline:
+        return IDM_MODESPLINE;
+    case modEvolvent:
+        return IDM_MODEEVEOLVENT;
+    default:
+        return IDM_MODESELECT;
+    }
+}
+
 LRESULT CMainWnd::ModeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iMode)
 {
     if((wNotifyCode == 1) && (iMode > 0) && (IsWindowVisible(m_hEdt1) || IsWindowVisible(m_hEdt2)))
@@ -1215,6 +1362,11 @@ LRESULT CMainWnd::ModeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iMode)
         delete m_pActiveObject;
         m_pActiveObject = NULL;
     }
+    else if(m_pSelForDimen)
+    {
+        m_pSelForDimen->DiscardDimen();
+        m_pSelForDimen = NULL;
+    }
 
     if(((m_iDrawMode + m_iToolMode > 0) && (iMode == 0)) ||
        ((m_iDrawMode + m_iToolMode == 0) && (iMode > 0)))
@@ -1222,24 +1374,24 @@ LRESULT CMainWnd::ModeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iMode)
         DrawCross(hwnd);
     }
 
-    m_iToolMode = 0;
+    m_iToolMode = tolNone;
 
     HMENU hMenu = GetMenu(hwnd);
 
     UINT uCheck = MF_BYCOMMAND | MF_UNCHECKED;
-    CheckMenuItem(hMenu, IDM_MODESELECT + m_iDrawMode, uCheck);
+    CheckMenuItem(hMenu, MapDrawModeToMenu(m_iDrawMode), uCheck);
 
     m_iDrawMode = iMode;
 
     StartNewObject(hwnd);
     if(!m_pActiveObject && (m_iDrawMode))
     {
-        m_iDrawMode = 0;
+        m_iDrawMode = modSelect;
         DrawCross(hwnd);
     }
 
     uCheck = MF_BYCOMMAND | MF_CHECKED;
-    CheckMenuItem(hMenu, IDM_MODESELECT + m_iDrawMode, uCheck);
+    CheckMenuItem(hMenu, MapDrawModeToMenu(m_iDrawMode), uCheck);
     return 0;
 }
 
@@ -1376,7 +1528,7 @@ LRESULT CMainWnd::EditCopyParCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
     if(!pNewObj) return 0;
 
     m_pActiveObject = pNewObj;
-    m_iToolMode = 1;
+    m_iToolMode = tolCopyPar;
 
     DrawCross(hwnd);
 
@@ -1409,7 +1561,7 @@ LRESULT CMainWnd::EditMoveCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
         LoadString(m_hInstance, IDS_SELLINETOMOVE, m_wsStatus2Msg, 128);
     else LoadString(m_hInstance, IDS_SELPOINTFROMMOVE, m_wsStatus2Msg, 128);
     SendMessage(m_hStatus, SB_SETTEXT, 2, (LPARAM)m_wsStatus2Msg);
-    m_iToolMode = 2;
+    m_iToolMode = tolMove;
     return 0;
 }
 
@@ -1424,7 +1576,7 @@ LRESULT CMainWnd::EditRotateCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
     SetFocus(m_hEdt1);
     LoadString(m_hInstance, IDS_SELPOINTTOROTATE, m_wsStatus2Msg, 128);
     SendMessage(m_hStatus, SB_SETTEXT, 2, (LPARAM)m_wsStatus2Msg);
-    m_iToolMode = 3;
+    m_iToolMode = tolRotate;
     return 0;
 }
 
@@ -1433,7 +1585,7 @@ LRESULT CMainWnd::EditMirrorCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
     DrawCross(hwnd);
     LoadString(m_hInstance, IDS_SELLINETOMIRROR, m_wsStatus2Msg, 128);
     SendMessage(m_hStatus, SB_SETTEXT, 2, (LPARAM)m_wsStatus2Msg);
-    m_iToolMode = 4;
+    m_iToolMode = tolMirror;
     return 0;
 }
 
@@ -1614,9 +1766,8 @@ LRESULT CMainWnd::EditRedoCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 
 LRESULT CMainWnd::EditConfirmCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 {
-    bool bConfirm = (m_iDrawMode == 1) || (m_iDrawMode == 2) ||
-        (m_iToolMode == 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE) ||
-        (m_iToolMode == 1);
+    bool bConfirm = (m_iDrawMode == modLine) || (m_iDrawMode == modCircle) ||
+        (m_iToolMode == tolRound) || (m_iToolMode == tolCopyPar);
     if(bConfirm)
     {
         wchar_t wBuf[64];
@@ -1699,6 +1850,26 @@ LRESULT CMainWnd::ViewActSizeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
     return 0;
 }
 
+LRESULT CMainWnd::ViewGridCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iType)
+{
+    HMENU hMnu = GetMenu(hwnd);
+    UINT uiCheck = MF_BYCOMMAND;
+    BOOL bChecked = (m_iDrawGridMode & iType);
+    if(bChecked)
+    {
+        m_iDrawGridMode &= ~iType;
+        uiCheck |= MF_UNCHECKED;
+    }
+    else
+    {
+        m_iDrawGridMode |= iType;
+        uiCheck |= MF_CHECKED;
+    }
+    CheckMenuItem(hMnu, IDM_VIEWGRIDPTS + iType - 1, uiCheck);
+    InvalidateRect(hwnd, NULL, TRUE);
+    return 0;
+}
+
 /*LRESULT CMainWnd::SnapCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iSnap)
 {
     int iSnapBit = (1 << iSnap);
@@ -1710,7 +1881,7 @@ LRESULT CMainWnd::ViewActSizeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 
 LRESULT CMainWnd::ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool)
 {
-    if((wNotifyCode == 1) && (iTool == 5) && (IsWindowVisible(m_hEdt1) || IsWindowVisible(m_hEdt2)))
+    if((wNotifyCode == 1) && (iTool == tolDimen) && (IsWindowVisible(m_hEdt1) || IsWindowVisible(m_hEdt2)))
     {
         HWND hFocus = GetFocus();
         char c = 'd';
@@ -1722,16 +1893,6 @@ LRESULT CMainWnd::ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool)
         {
             SendMessage(m_hEdt2, WM_CHAR, c, 0);
         }
-        return 0;
-    }
-
-    if((iTool == 5) && (m_pDrawObjects->GetSelectCount() != 1))
-    {
-        wchar_t sCap[64];
-        wchar_t sMsg[128];
-        LoadString(m_hInstance, IDS_WARNING, sCap, 64);
-        LoadString(m_hInstance, IDS_ONEOBJFORDIMEN, sMsg, 128);
-        MessageBox(hwnd, sMsg, sCap, MB_OK | MB_ICONWARNING);
         return 0;
     }
 
@@ -1757,6 +1918,25 @@ LRESULT CMainWnd::ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool)
         delete m_pActiveObject;
         m_pActiveObject = NULL;
     }
+    else if(m_pSelForDimen)
+    {
+        m_pSelForDimen->DiscardDimen();
+        m_pSelForDimen = NULL;
+    }
+
+    if(iTool == tolDimen)
+    {
+        if(m_pDrawObjects->GetSelectCount() != 1)
+        {
+            wchar_t sCap[64];
+            wchar_t sMsg[128];
+            LoadString(m_hInstance, IDS_WARNING, sCap, 64);
+            LoadString(m_hInstance, IDS_ONEOBJFORDIMEN, sMsg, 128);
+            MessageBox(hwnd, sMsg, sCap, MB_OK | MB_ICONWARNING);
+            return 0;
+        }
+        m_pSelForDimen = m_pDrawObjects->GetSelected(0);
+    }
 
     if(((m_iDrawMode + m_iToolMode > 0) && (iTool == 0)) ||
        ((m_iDrawMode + m_iToolMode == 0) && (iTool > 0)))
@@ -1765,7 +1945,7 @@ LRESULT CMainWnd::ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool)
     }
 
     m_iToolMode = iTool;
-    m_iDrawMode = 0;
+    m_iDrawMode = modSelect;
 
     StartNewObject(hwnd);
     return 0;
@@ -1889,7 +2069,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             DeleteObject(hRgn);
         }
     }
-    else if((m_iToolMode > 19) && (m_iToolMode != 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE))
+    else if((m_iToolMode > 20) && (m_iToolMode != tolRound))
     {
         if(GetPtDist(&m_cLastDownPt, xPos, yPos) > 4)
         {
@@ -1899,7 +2079,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
 
         switch(m_iToolMode)
         {
-        case 20:
+        case tolKnife:
             if(m_pDrawObjects->CutSelected(m_cLastDrawPt, dTol, &cdr, pRegions))
             {
                 hRgn = GetUpdateRegion(pRegions);
@@ -1912,7 +2092,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 SetTitle(hwnd, false);
             }
             break;
-        case 20 + IDM_TOOLSEXTEND - IDM_TOOLSKNIFE:
+        case tolExtend:
             if(m_pDrawObjects->ExtendSelected(m_cLastDrawPt, dTol, &cdr, pRegions))
             {
                 hRgn = GetUpdateRegion(pRegions);
@@ -1925,7 +2105,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 SetTitle(hwnd, false);
             }
             break;
-        case 20 + IDM_TOOLSCONFLICTS - IDM_TOOLSKNIFE:
+        case tolConflict:
             if(m_pDrawObjects->SetCrossSelected(m_cLastDrawPt, dTol, &cdr, pRegions))
             {
                 hRgn = GetUpdateRegion(pRegions);
@@ -1938,7 +2118,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 SetTitle(hwnd, false);
             }
             break;
-        case 20 + IDM_TOOLSMEASURE - IDM_TOOLSKNIFE:
+        case tolMeas:
             if(!m_cMeasPoint1.bIsSet)
             {
                 m_cMeasPoint1.bIsSet = true;
@@ -1991,7 +2171,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
         PDObject pSelLine = NULL;
         CDLine cLine;
 
-        if((m_iToolMode > 1) && (m_iToolMode < 4))
+        if((m_iToolMode > tolCopyPar) && (m_iToolMode < tolMirror))
         {
             SendMessage(m_hEdt1, WM_GETTEXT, 64, (LPARAM)buf);
             if(swscanf(buf, L"%f", &f) == 1)
@@ -2003,7 +2183,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             if(swscanf(buf, L"%d", &i) == 1) iCop = i;
         }
 
-        if(m_iToolMode == 2)
+        if(m_iToolMode == tolMove)
         {
             if(m_cMeasPoint1.bIsSet)
             {
@@ -2027,7 +2207,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                         StartNewObject(hwnd);
                     }
                 }
-                m_iToolMode = 0;
+                m_iToolMode = tolNone;
                 m_cMeasPoint1.bIsSet = false;
             }
             else
@@ -2038,7 +2218,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                     if(pSelLine)
                     {
                         cLine = pSelLine->GetLine();
-                        m_iToolMode = 0;
+                        m_iToolMode = tolNone;
                         if(!m_bPaperUnits) dVal *= m_dDrawScale;
                         if(m_pDrawObjects->MoveSelected(cLine, dVal, iCop, &cdr, false, pRegions))
                         {
@@ -2063,14 +2243,14 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 }
             }
         }
-        else if(m_iToolMode == 3)
+        else if(m_iToolMode == tolRotate)
         {
             if(bdValSet)
             {
                 //if(m_cFSR.iAngUnit < 1) dVal *= M_PI/180.0;
                 dVal *= M_PI/180.0/m_cFSR.cAngUnit.dBaseToUnit;
 
-                m_iToolMode = 0;
+                m_iToolMode = tolNone;
                 if(m_pDrawObjects->RotateSelected(m_cLastDrawPt, -dVal, iCop, &cdr, pRegions))
                 {
                     hRgn = GetUpdateRegion(pRegions);
@@ -2095,7 +2275,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                     dVal = atan2(cPt1.y, cPt1.x);
                     m_cMeasPoint1.bIsSet = false;
                     m_cMeasPoint2.bIsSet = false;
-                    m_iToolMode = 0;
+                    m_iToolMode = tolNone;
                     if(m_pDrawObjects->RotateSelected(m_cMeasPoint1.cOrigin, dVal, iCop, &cdr, pRegions))
                     {
                         hRgn = GetUpdateRegion(pRegions);
@@ -2125,13 +2305,13 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 SendMessage(m_hStatus, SB_SETTEXT, 2, (LPARAM)m_wsStatus2Msg);
             }
         }
-        else if(m_iToolMode == 4)
+        else if(m_iToolMode == tolMirror)
         {
             pSelLine = m_pDrawObjects->SelectLineByPoint(m_cLastDrawPt, dTol);
             if(pSelLine)
             {
                 cLine = pSelLine->GetLine();
-                m_iToolMode = 0;
+                m_iToolMode = tolNone;
                 if(m_pDrawObjects->MirrorSelected(cLine, &cdr, pRegions))
                 {
                     hRgn = GetUpdateRegion(pRegions);
@@ -2146,9 +2326,9 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 }
             }
         }
-        else if(m_iToolMode == 5)
+        else if(m_iToolMode == tolDimen)
         {
-            if(m_pDrawObjects->AddDimen(m_cLastDrawPt, dTol, &cdr, pRegions))
+            if(m_pDrawObjects->AddDimen(m_pSelForDimen, m_cLastDrawPt, dTol, &cdr, pRegions))
             {
                 hRgn = GetUpdateRegion(pRegions);
                 //InvalidateRect(hwnd, &rc, TRUE);
@@ -2163,7 +2343,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
         else
         {
             int iCtrl = 0;
-            if(m_iToolMode == 1)
+            if(m_iToolMode == tolCopyPar)
             {
                 iCtrl = 2;
                 if(fwKeys & MK_SHIFT) iCtrl = 3;
@@ -2181,7 +2361,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 m_pDrawObjects->Add(m_pActiveObject);
                 SetTitle(hwnd, false);
                 m_pActiveObject = NULL;
-                m_iToolMode = 0;
+                m_iToolMode = tolNone;
                 m_wsStatus2Base[0] = 0;
                 wcscpy(m_wsStatus2Msg, m_wsStatus2Base);
                 SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)m_wsStatus2Msg);
@@ -2268,7 +2448,7 @@ LRESULT CMainWnd::WMRButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             }
         }
     }
-    else if(m_iToolMode > 0)
+    else if(m_iToolMode > tolNone)
     {
     }
     else
@@ -2292,7 +2472,7 @@ LRESULT CMainWnd::WMRButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             m_pDrawObjects->Add(m_pActiveObject);
             SetTitle(hwnd, false);
             m_pActiveObject = NULL;
-            m_iToolMode = 0;
+            m_iToolMode = tolNone;
             m_wsStatus2Base[0] = 0;
             wcscpy(m_wsStatus2Msg, m_wsStatus2Base);
             SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)m_wsStatus2Msg);
@@ -2807,10 +2987,10 @@ void CMainWnd::DrawObject(HWND hWnd, HDC hdc, PDObject pObj, int iMode, int iDim
 int CMainWnd::GetDynMode()
 {
     int iRes = 0;
-    if(m_iDrawMode > 0) iRes = 1;
-    else if(m_iToolMode == 1) iRes = 2;
-    else if(m_iToolMode == 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE) iRes = 3;
-    else if(m_iToolMode == 5) iRes = 4;
+    if(m_iDrawMode > modSelect) iRes = 1;
+    else if(m_iToolMode == tolCopyPar) iRes = 2;
+    else if(m_iToolMode == tolRound) iRes = 3;
+    else if(m_iToolMode == tolDimen) iRes = 4;
     return iRes;
 }
 
@@ -2939,7 +3119,7 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
         double dAng1;
         bool bDoSnap = true;
 
-        if((m_iDrawMode == 1) && m_pActiveObject)
+        if((m_iDrawMode == modLine) && m_pActiveObject)
         {
             bHasLastPoint = m_pActiveObject->GetPoint(0, 0, &cLstInPt);
         }
@@ -3017,7 +3197,7 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             dTol = (double)m_iSnapTolerance/m_dUnitScale;
 
             int iSnapType = 0;
-            if(m_iToolMode == 20 + IDM_TOOLSCONFLICTS - IDM_TOOLSKNIFE) iSnapType = 1;
+            if(m_iToolMode == tolConflict) iSnapType = 1;
             if(m_pDrawObjects->GetSnapPoint(iSnapType, m_cLastDrawPt,
                 dTol, &cSnapPt, m_pActiveObject) > 0)
             {
@@ -3042,7 +3222,7 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
 
             if(m_pActiveObject)
             {
-                if((m_iDrawMode == 1) && (iDynMode != 2))
+                if((m_iDrawMode == modLine) && (iDynMode != 2))
                 {
                     bRestrict = IS_ANGLE_VAL(m_iRestrictSet);
                     if(bRestrict)
@@ -3122,7 +3302,7 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 {
                     m_dSavedDist = dVal;
 
-                    if((m_iDrawMode == 1) && (iDynMode != 2))
+                    if((m_iDrawMode == modLine) && (iDynMode != 2))
                     {
                         dVal *= m_cFSR.cAngUnit.dBaseToUnit*180.0/M_PI;
                         swprintf(m_wsStatus2Msg, L"%s %.2f %s", m_wsStatus2Base, dVal,
@@ -3150,7 +3330,7 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
             else
             {
                 dVal = m_dRestrictValue;
-                if((m_iDrawMode == 1) && (iDynMode != 2))
+                if((m_iDrawMode == modLine) && (iDynMode != 2))
                 {
                     swprintf(m_wsStatus2Msg, L"%s %.2f %s", m_wsStatus2Base, dVal,
                         m_cFSR.cAngUnit.wsAbbrev);
@@ -3234,8 +3414,8 @@ LRESULT CMainWnd::WMMouseWheel(HWND hwnd, WORD fwKeys, int zDelta, int xPos, int
 LRESULT CMainWnd::WMLButtonDblClk(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
 {
     //MessageBox(hwnd, L"WMLButtonDblClk", L"Debug", MB_OK);
-    //if((m_iDrawMode > 0) || (m_iToolMode == 1))
-    if(m_iDrawMode > 0)
+    //if((m_iDrawMode > modSelect) || (m_iToolMode == tolCopyPar))
+    if(m_iDrawMode > modSelect)
     {
         if(m_pActiveObject)
         {
@@ -3382,32 +3562,32 @@ void CMainWnd::StartNewObject(HWND hWnd)
 
     switch(m_iDrawMode)
     {
-    case 1:
+    case modLine:
         LoadString(m_hInstance, IDS_ANGLE, m_wsStatus2Base, 64);
-        m_pActiveObject = new CDObject(1, m_cFSR.dDefLineWidth);
+        m_pActiveObject = new CDObject(dtLine, m_cFSR.dDefLineWidth);
         ShowWindow(m_hEdt1, SW_SHOW);
         SetFocus(m_hEdt1);
         break;
-    case 2:
+    case modCircle:
         LoadString(m_hInstance, IDS_RADIUS, m_wsStatus2Base, 64);
-        m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
+        m_pActiveObject = new CDObject(dtCircle, m_cFSR.dDefLineWidth);
         if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         //if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         ShowWindow(m_hEdt1, SW_SHOW);
         SetFocus(m_hEdt1);
         break;
-    case 3:
-        m_pActiveObject = new CDObject(3, m_cFSR.dDefLineWidth);
+    case modEllipse:
+        m_pActiveObject = new CDObject(dtEllipse, m_cFSR.dDefLineWidth);
         if(iLines == 2)
         {
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
         break;
-    case 4:
+    case modArcElps:
         if(iLines == 2)
         {
-            m_pActiveObject = new CDObject(4, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtArcEllipse, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
@@ -3418,10 +3598,10 @@ void CMainWnd::StartNewObject(HWND hWnd)
             MessageBox(hWnd, sMsg, sCap, MB_OK | MB_ICONWARNING);
         }
         break;
-    case 5:
+    case modHyperbola:
         if(iLines == 2)
         {
-            m_pActiveObject = new CDObject(5, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtHyperbola, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
             if(iLinesFlag & 2) m_pActiveObject->SetInputLine(1, cLine2);
         }
@@ -3432,10 +3612,10 @@ void CMainWnd::StartNewObject(HWND hWnd)
             MessageBox(hWnd, sMsg, sCap, MB_OK | MB_ICONWARNING);
         }
         break;
-    case 6:
+    case modParabola:
         if(iLines == 1)
         {
-            m_pActiveObject = new CDObject(6, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtParabola, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         }
         else
@@ -3445,17 +3625,17 @@ void CMainWnd::StartNewObject(HWND hWnd)
             MessageBox(hWnd, sMsg, sCap, MB_OK | MB_ICONWARNING);
         }
         break;
-    case 7:
-        m_pActiveObject = new CDObject(7, m_cFSR.dDefLineWidth);
+    case modSpline:
+        m_pActiveObject = new CDObject(dtSpline, m_cFSR.dDefLineWidth);
         break;
-    case 8:
+    case modEvolvent:
         iLines = m_pDrawObjects->GetNumOfSelectedCircles();
         if(iLines == 1)
         {
             pLineObj = m_pDrawObjects->GetSelectedCircle(0);
             cLine1 = pLineObj->GetCircle();
             if(cLine1.bIsSet) iLinesFlag |= 1;
-            m_pActiveObject = new CDObject(8, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtEvolvent, m_cFSR.dDefLineWidth);
             if(iLinesFlag & 1) m_pActiveObject->SetInputLine(0, cLine1);
         }
         else
@@ -3467,12 +3647,12 @@ void CMainWnd::StartNewObject(HWND hWnd)
         break;
     }
 
-    if(m_iToolMode == 20 + IDM_TOOLSROUND - IDM_TOOLSKNIFE)
+    if(m_iToolMode == tolRound)
     {
         int iCnt = m_pDrawObjects->GetSelectCount();
         if(iCnt == 2)
         {
-            m_pActiveObject = new CDObject(2, m_cFSR.dDefLineWidth);
+            m_pActiveObject = new CDObject(dtCircle, m_cFSR.dDefLineWidth);
             LoadString(m_hInstance, IDS_RADIUS, m_wsStatus2Base, 64);
             ShowWindow(m_hEdt1, SW_SHOW);
             SetFocus(m_hEdt1);
@@ -3517,7 +3697,7 @@ LRESULT CMainWnd::Edit1Cmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 
         WMMouseMove(hwnd, 0, m_cLastMovePt.x, m_cLastMovePt.y);
 
-        if((m_iToolMode == 2) && !m_cMeasPoint1.bIsSet && (iOldRest != m_iRestrictSet))
+        if((m_iToolMode == tolMove) && !m_cMeasPoint1.bIsSet && (iOldRest != m_iRestrictSet))
         {
             if(IS_LENGTH_VAL(m_iRestrictSet))
                 LoadString(m_hInstance, IDS_SELLINETOMOVE, m_wsStatus2Msg, 128);

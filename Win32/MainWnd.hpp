@@ -60,8 +60,10 @@ private:
 
     PDObject m_pActiveObject;
     PDObject m_pHighObject;
+    PDObject m_pSelForDimen;
     int m_iHighDimen;
     int m_iLastExportType;
+    int m_iDrawGridMode;
 
     wchar_t m_wsStatus2Base[64];
     wchar_t m_wsStatus2Msg[128];
@@ -126,6 +128,7 @@ private:
     LRESULT EditConfirmCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     LRESULT ViewFitCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
     LRESULT ViewActSizeCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
+    LRESULT ViewGridCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iType);
     //LRESULT SnapCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iSnap);
     LRESULT ToolsCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl, int iTool);
     LRESULT ToolsBreakCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl);
