@@ -2,10 +2,10 @@
 To translate the Linux source code invoke the following command from the Linux folder. So assuming
 you are in the SteamCAD root folder, do
 ```
-$ cd SteamCAD
+$ cd Linux
 $ msginit --input=po/SteamCAD.pot --locale=cs --output=po/cs/SteamCAD.po
 ```
-where you replace or occurance of `cs` by your language code. The translate all the strings inside
+where you replace oll occurances of `cs` by your language code. Then translate all the strings inside
 the newly generated SteamCAD.po file. See the `po/cs/SteamCAD.po` for reference. When traslation
 is done, create the `mo` file by:
 ```
