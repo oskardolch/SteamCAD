@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-20 22:13+0100\n"
+"POT-Creation-Date: 2019-02-03 10:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,7 +21,8 @@ msgstr ""
 msgid " : "
 msgstr ""
 
-#: DApplication.cpp:176
+#: DApplication.cpp:176 DApplication.cpp:223 DApplication.cpp:2614
+#: DApplication.cpp:2641
 msgid "# of copies: "
 msgstr ""
 
@@ -29,15 +30,17 @@ msgstr ""
 msgid "%"
 msgstr ""
 
-#: DApplication.cpp:1853
+#: DApplication.cpp:1853 DApplication.cpp:2026
 msgid "Adobe Acrobat (*.pdf)"
 msgstr ""
 
-#: DApplication.cpp:1549 DApplication.cpp:1762
+#: DApplication.cpp:1549 DApplication.cpp:1762 DApplication.cpp:1722
+#: DApplication.cpp:1935
 msgid "All files"
 msgstr ""
 
-#: DApplication.cpp:2074 DApplication.cpp:2435
+#: DApplication.cpp:2074 DApplication.cpp:2435 DApplication.cpp:2254
+#: DApplication.cpp:2639
 msgid "Angle: "
 msgstr ""
 
@@ -69,7 +72,7 @@ msgstr ""
 msgid "Base:"
 msgstr ""
 
-#: DViewToolsMenu.cpp:119
+#: DViewToolsMenu.cpp:119 DViewToolsMenu.cpp:146
 msgid "Best _Fit"
 msgstr ""
 
@@ -85,31 +88,33 @@ msgstr ""
 msgid "Circles:"
 msgstr ""
 
-#: DApplication.cpp:2451
+#: DApplication.cpp:2451 DApplication.cpp:2661
 msgid "Click a line to mirror about"
 msgstr ""
 
-#: DApplication.cpp:2426 DApplication.cpp:3873
+#: DApplication.cpp:2426 DApplication.cpp:3873 DApplication.cpp:2630
+#: DApplication.cpp:4148
 msgid "Click a line to move along"
 msgstr ""
 
-#: DApplication.cpp:2427 DApplication.cpp:3874
+#: DApplication.cpp:2427 DApplication.cpp:3874 DApplication.cpp:2631
+#: DApplication.cpp:4149
 msgid "Click a point to move from"
 msgstr ""
 
-#: DApplication.cpp:3533
+#: DApplication.cpp:3533 DApplication.cpp:3802
 msgid "Click a point to move to"
 msgstr ""
 
-#: DApplication.cpp:2443
+#: DApplication.cpp:2443 DApplication.cpp:2653
 msgid "Click a point to rotate about"
 msgstr ""
 
-#: DApplication.cpp:3588
+#: DApplication.cpp:3588 DApplication.cpp:3857
 msgid "Click a point to rotate from"
 msgstr ""
 
-#: DApplication.cpp:3581
+#: DApplication.cpp:3581 DApplication.cpp:3850
 msgid "Click a point to rotate to"
 msgstr ""
 
@@ -141,7 +146,7 @@ msgstr ""
 msgid "Dimensions:"
 msgstr ""
 
-#: DApplication.cpp:118 DSnapDlg.cpp:46
+#: DApplication.cpp:118 DSnapDlg.cpp:46 DApplication.cpp:163
 msgid "Disable snap"
 msgstr ""
 
@@ -149,11 +154,12 @@ msgstr ""
 msgid "Display units"
 msgstr ""
 
-#: DApplication.cpp:2403 DApplication.cpp:2414
+#: DApplication.cpp:2403 DApplication.cpp:2414 DApplication.cpp:2597
+#: DApplication.cpp:2612
 msgid "Distance: "
 msgstr ""
 
-#: DApplication.cpp:1883
+#: DApplication.cpp:1883 DApplication.cpp:2056
 msgid "Drawing Exchange Format (*.dxf)"
 msgstr ""
 
@@ -181,11 +187,11 @@ msgstr ""
 msgid "Ellipses:"
 msgstr ""
 
-#: DApplication.cpp:113 DSnapDlg.cpp:42
+#: DApplication.cpp:113 DSnapDlg.cpp:42 DApplication.cpp:158
 msgid "Enable snap"
 msgstr ""
 
-#: DApplication.cpp:1865
+#: DApplication.cpp:1865 DApplication.cpp:2038
 msgid "Encapsulated PostScript (*.eps)"
 msgstr ""
 
@@ -193,27 +199,27 @@ msgstr ""
 msgid "Evolvents:"
 msgstr ""
 
-#: DApplication.cpp:2159
+#: DApplication.cpp:2159 DApplication.cpp:2353
 msgid "Exactly one circle must be selected to insert an evolventa"
 msgstr ""
 
-#: DApplication.cpp:2137
+#: DApplication.cpp:2137 DApplication.cpp:2331
 msgid "Exactly one line must be selected to insert a parabola"
 msgstr ""
 
-#: DApplication.cpp:2244
+#: DApplication.cpp:2244 DApplication.cpp:2488
 msgid "Exactly one object must be selected to insert a dimension"
 msgstr ""
 
-#: DApplication.cpp:2122
+#: DApplication.cpp:2122 DApplication.cpp:2316
 msgid "Exactly two lines must be selected to insert a hyperbola"
 msgstr ""
 
-#: DApplication.cpp:2106
+#: DApplication.cpp:2106 DApplication.cpp:2300
 msgid "Exactly two lines must be selected to insert an arc ellipse"
 msgstr ""
 
-#: DApplication.cpp:2180
+#: DApplication.cpp:2180 DApplication.cpp:2378
 msgid "Exactly two objects must be selected to round corner"
 msgstr ""
 
@@ -246,6 +252,7 @@ msgid "Hyperbolas:"
 msgstr ""
 
 #: DDimEditDlg.cpp:384 DFileSetupDlg.cpp:1187 DFileSetupDlg.cpp:1214
+#: DDimEditDlg.cpp:390
 msgid "Invalid mask (unknown reason)"
 msgstr ""
 
@@ -255,7 +262,8 @@ msgid "Invalid number"
 msgstr ""
 
 #: DLineStyleDlg.cpp:248
-msgid "Invalid pattern sequence (zero or no-value must not precede a non-zero value)"
+msgid ""
+"Invalid pattern sequence (zero or no-value must not precede a non-zero value)"
 msgstr ""
 
 #: DDimEditDlg.cpp:260 DFileSetupDlg.cpp:503
@@ -310,11 +318,11 @@ msgstr ""
 msgid "M_irror"
 msgstr ""
 
-#: DViewToolsMenu.cpp:196
+#: DViewToolsMenu.cpp:196 DViewToolsMenu.cpp:247
 msgid "Mark con_flicts"
 msgstr ""
 
-#: DViewToolsMenu.cpp:206
+#: DViewToolsMenu.cpp:206 DViewToolsMenu.cpp:257
 msgid "Measure _distance"
 msgstr ""
 
@@ -334,11 +342,11 @@ msgstr ""
 msgid "Old scale:"
 msgstr ""
 
-#: DApplication.cpp:1754
+#: DApplication.cpp:1754 DApplication.cpp:1927
 msgid "Open File"
 msgstr ""
 
-#: DApplication.cpp:1871
+#: DApplication.cpp:1871 DApplication.cpp:2044
 msgid "PNG Image (*.png)"
 msgstr ""
 
@@ -366,23 +374,27 @@ msgstr ""
 msgid "Portrait"
 msgstr ""
 
-#: DApplication.cpp:1859
+#: DApplication.cpp:1859 DApplication.cpp:2032
 msgid "PostScript (*.ps)"
 msgstr ""
 
 #: DDimEditDlg.cpp:378 DFileSetupDlg.cpp:1181 DFileSetupDlg.cpp:1208
+#: DDimEditDlg.cpp:384
 msgid "Precision should not be greater than 16"
 msgstr ""
 
 #: DDimEditDlg.cpp:375 DFileSetupDlg.cpp:1178 DFileSetupDlg.cpp:1205
+#: DDimEditDlg.cpp:381
 msgid "Precision should not be negative"
 msgstr ""
 
 #: DDimEditDlg.cpp:381 DFileSetupDlg.cpp:1184 DFileSetupDlg.cpp:1211
+#: DDimEditDlg.cpp:387
 msgid "Precision value cannot be parsed"
 msgstr ""
 
-#: DApplication.cpp:2080 DApplication.cpp:2172
+#: DApplication.cpp:2080 DApplication.cpp:2172 DApplication.cpp:2267
+#: DApplication.cpp:2366
 msgid "Radius: "
 msgstr ""
 
@@ -390,7 +402,7 @@ msgstr ""
 msgid "Re_do"
 msgstr ""
 
-#: DViewToolsMenu.cpp:220
+#: DViewToolsMenu.cpp:220 DViewToolsMenu.cpp:271
 msgid "Re_scale and Units"
 msgstr ""
 
@@ -406,7 +418,7 @@ msgstr ""
 msgid "Right width:"
 msgstr ""
 
-#: DViewToolsMenu.cpp:225
+#: DViewToolsMenu.cpp:225 DViewToolsMenu.cpp:276
 msgid "S_tatistics"
 msgstr ""
 
@@ -415,7 +427,8 @@ msgid "Sample 0123456"
 msgstr ""
 
 #. GError *error = NULL;
-#: DApplication.cpp:1539 DApplication.cpp:1847
+#: DApplication.cpp:1539 DApplication.cpp:1847 DApplication.cpp:1712
+#: DApplication.cpp:2020
 msgid "Save File"
 msgstr ""
 
@@ -427,7 +440,7 @@ msgstr ""
 msgid "Save se_lection ..."
 msgstr ""
 
-#: DApplication.cpp:1877
+#: DApplication.cpp:1877 DApplication.cpp:2050
 msgid "Scalable Vector (*.svg)"
 msgstr ""
 
@@ -459,6 +472,14 @@ msgstr ""
 msgid "Scale:"
 msgstr ""
 
+#: DViewToolsMenu.cpp:178
+msgid "Show Grid _Lines"
+msgstr ""
+
+#: DViewToolsMenu.cpp:168
+msgid "Show Grid _Points"
+msgstr ""
+
 #: DFileSetupDlg.cpp:313
 msgid "Size units for lines, arrows and fonts:"
 msgstr ""
@@ -483,7 +504,8 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: DApplication.cpp:1545 DApplication.cpp:1758
+#: DApplication.cpp:1545 DApplication.cpp:1758 DApplication.cpp:1718
+#: DApplication.cpp:1931
 msgid "SteamCAD Files"
 msgstr ""
 
@@ -491,7 +513,7 @@ msgstr ""
 msgid "Text"
 msgstr ""
 
-#: DApplication.cpp:1518
+#: DApplication.cpp:1518 DApplication.cpp:1691
 msgid "The file has been changed. Do you want to save it?"
 msgstr ""
 
@@ -527,7 +549,7 @@ msgstr ""
 msgid "_Arc Ellipse"
 msgstr ""
 
-#: DViewToolsMenu.cpp:166
+#: DViewToolsMenu.cpp:166 DViewToolsMenu.cpp:217
 msgid "_Break apart"
 msgstr ""
 
@@ -555,7 +577,7 @@ msgstr ""
 msgid "_Export ..."
 msgstr ""
 
-#: DViewToolsMenu.cpp:186
+#: DViewToolsMenu.cpp:186 DViewToolsMenu.cpp:237
 msgid "_Extend"
 msgstr ""
 
@@ -571,7 +593,7 @@ msgstr ""
 msgid "_Include ..."
 msgstr ""
 
-#: DViewToolsMenu.cpp:156
+#: DViewToolsMenu.cpp:156 DViewToolsMenu.cpp:207
 msgid "_Knife"
 msgstr ""
 
@@ -587,7 +609,7 @@ msgstr ""
 msgid "_New"
 msgstr ""
 
-#: DViewToolsMenu.cpp:131
+#: DViewToolsMenu.cpp:131 DViewToolsMenu.cpp:158
 msgid "_Normal Size"
 msgstr ""
 
@@ -611,7 +633,7 @@ msgstr ""
 msgid "_Rotate"
 msgstr ""
 
-#: DViewToolsMenu.cpp:176
+#: DViewToolsMenu.cpp:176 DViewToolsMenu.cpp:227
 msgid "_Round"
 msgstr ""
 
@@ -627,7 +649,7 @@ msgstr ""
 msgid "_Spline"
 msgstr ""
 
-#: DViewToolsMenu.cpp:231
+#: DViewToolsMenu.cpp:231 DViewToolsMenu.cpp:282
 msgid "_Tools"
 msgstr ""
 
@@ -635,6 +657,6 @@ msgstr ""
 msgid "_Undo"
 msgstr ""
 
-#: DViewToolsMenu.cpp:138
+#: DViewToolsMenu.cpp:138 DViewToolsMenu.cpp:189
 msgid "_View"
 msgstr ""
