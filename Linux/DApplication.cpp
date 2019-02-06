@@ -620,6 +620,78 @@ void CDApplication::RestoreSettings()
     return;
 }
 
+gchar* XMLEscapeStr(gchar *sSrc)
+{
+    int iLen = 0;
+    gchar *sStart = sSrc;
+    gchar *sQuot = strchr(sStart, '"');
+    while(sQuot)
+    {
+        iLen += sQuot - sStart + 6;
+        sStart = sQuot + 1;
+        sQuot = strchr(sStart, '"');
+    }
+    iLen += strlen(sStart) + 1;
+
+    gchar *sRes = (gchar*)g_malloc(iLen*sizeof(gchar));
+    sRes[0] = 0;
+    int i = 0;
+    int j = 0;
+    while(sSrc[i] != 0)
+    {
+        if(sSrc[i] == '"')
+        {
+            g_strlcat(sRes, "&quot;", iLen);
+            j += 6;
+        }
+        else
+        {
+            sRes[j++] = sSrc[i];
+            sRes[j] = 0;
+        }
+        i++;
+    }
+
+    return sRes;
+}
+
+gboolean XMLEscapeStrBuf(gchar *sDest, gchar *sSrc)
+{
+    gboolean bRes = TRUE;
+    int i = 0;
+    int j = 0;
+    sDest[j] = 0;
+    while(bRes && (sSrc[i] != 0))
+    {
+        if(sSrc[i] == '"')
+        {
+            bRes = (g_strlcat(sDest, "&quot;", 64) < 64);
+            j += 6;
+        }
+        else
+        {
+            sDest[j++] = sSrc[i];
+            sDest[j] = 0;
+        }
+        i++;
+    }
+    return bRes;
+}
+
+gchar* GetEscapedStr(gchar *sbuf, gchar *src, gboolean *pbFree)
+{
+    *pbFree = FALSE;
+    if(src)
+    {
+        if(XMLEscapeStrBuf(sbuf, src)) return sbuf;
+
+        *pbFree = TRUE;
+        return XMLEscapeStr(src);
+    }
+
+    return NULL;
+}
+
 void CDApplication::SaveSettings()
 {
     const gchar *homedir = g_get_home_dir();
@@ -635,9 +707,13 @@ void CDApplication::SaveSettings()
     gtk_window_get_size(GTK_WINDOW(m_pMainWnd), &dx, &dy);
     gint igr = gtk_window_get_gravity(GTK_WINDOW(m_pMainWnd));
 
+    gboolean bFree1, bFree2, bFree3;
+    gchar sVal1[64], sVal2[64], sVal3[64];
+    gchar *psVal1, *psVal2, *psVal3;
+
     gchar sbuf[256];
     g_strlcpy(sbuf, "<?xml version=\"1.0\"?>\n<!--SteamCAD Workspace Settings-->\n<Settings>\n", 256);
-        fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+    fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
     g_sprintf(sbuf, "  <MainForm Left=\"%d\" Top=\"%d\" Width=\"%d\" Height=\"%d\" Gravity=\"%d\"/>\n", 
         x, y, dx, dy, igr);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
@@ -645,9 +721,13 @@ void CDApplication::SaveSettings()
     g_sprintf(sbuf, "  <DrawSettings PaperUnits=\"%d\" LastExportType=\"%d\" DrawGridMode=\"%d\"\n", m_bPaperUnits, m_iLastExportType, m_iDrawGridMode);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
-    if(m_sLastPath)	g_sprintf(sbuf, "    LastPath=\"%s\"/>\n", m_sLastPath);
+    psVal1 = GetEscapedStr(sVal1, m_sLastPath, &bFree1);
+
+    if(psVal1)	g_sprintf(sbuf, "    LastPath=\"%s\"/>\n", psVal1);
     else strcpy(sbuf, "    LastPath=\"\"/>\n");
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+
+    if(bFree1) g_free(psVal1);
 
     g_sprintf(sbuf, "  <PageSettings Portrait=\"%d\" ScaleNomin=\"%.3f\" ScaleDenom=\"%.3f\"\n",
         m_cFSR.bPortrait, m_cFSR.dScaleNomin, m_cFSR.dScaleDenom);
@@ -661,29 +741,69 @@ void CDApplication::SaveSettings()
         m_cFSR.cPaperSize.sPaperSizeName, m_cFSR.cPaperSize.dPaperWidth, m_cFSR.cPaperSize.dPaperHeight);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
+    psVal1 = GetEscapedStr(sVal1, m_cFSR.cLenUnit.sName, &bFree1);
+    psVal2 = GetEscapedStr(sVal2, m_cFSR.cLenUnit.sAbbrev, &bFree2);
+    psVal3 = GetEscapedStr(sVal3, m_cFSR.cLenUnit.sAbbrev2, &bFree3);
+
     g_sprintf(sbuf, "    <LengthUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
-        m_cFSR.cLenUnit.sName, m_cFSR.cLenUnit.sAbbrev, m_cFSR.cLenUnit.dBaseToUnit, m_cFSR.cLenUnit.sAbbrev2);
+        psVal1, psVal2, m_cFSR.cLenUnit.dBaseToUnit, psVal3);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+
+    if(bFree1) g_free(psVal1);
+    if(bFree2) g_free(psVal2);
+    if(bFree3) g_free(psVal3);
+
+    psVal1 = GetEscapedStr(sVal1, m_cFSR.cAngUnit.sName, &bFree1);
+    psVal2 = GetEscapedStr(sVal2, m_cFSR.cAngUnit.sAbbrev, &bFree2);
+    psVal3 = GetEscapedStr(sVal3, m_cFSR.cAngUnit.sAbbrev2, &bFree3);
 
     g_sprintf(sbuf, "    <AngularUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
-        m_cFSR.cAngUnit.sName, m_cFSR.cAngUnit.sAbbrev, m_cFSR.cAngUnit.dBaseToUnit, m_cFSR.cAngUnit.sAbbrev2);
+        psVal1, psVal2, m_cFSR.cAngUnit.dBaseToUnit, psVal3);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+
+    if(bFree1) g_free(psVal1);
+    if(bFree2) g_free(psVal2);
+    if(bFree3) g_free(psVal3);
+
+    psVal1 = GetEscapedStr(sVal1, m_cFSR.cPaperUnit.sName, &bFree1);
+    psVal2 = GetEscapedStr(sVal2, m_cFSR.cPaperUnit.sAbbrev, &bFree2);
+    psVal3 = GetEscapedStr(sVal3, m_cFSR.cPaperUnit.sAbbrev2, &bFree3);
 
     g_sprintf(sbuf, "    <PaperUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
-        m_cFSR.cPaperUnit.sName, m_cFSR.cPaperUnit.sAbbrev, m_cFSR.cPaperUnit.dBaseToUnit, m_cFSR.cPaperUnit.sAbbrev2);
+        psVal1, psVal2, m_cFSR.cPaperUnit.dBaseToUnit, psVal3);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
+    if(bFree1) g_free(psVal1);
+    if(bFree2) g_free(psVal2);
+    if(bFree3) g_free(psVal3);
+
+    psVal1 = GetEscapedStr(sVal1, m_cFSR.cGraphUnit.sName, &bFree1);
+    psVal2 = GetEscapedStr(sVal2, m_cFSR.cGraphUnit.sAbbrev, &bFree2);
+    psVal3 = GetEscapedStr(sVal3, m_cFSR.cGraphUnit.sAbbrev2, &bFree3);
+
     g_sprintf(sbuf, "    <GraphUnit UnitName=\"%s\" UnitAbbrev=\"%s\" UnitScale=\"%.3f\" UnitAbbrev2=\"%s\"/>\n",
-        m_cFSR.cGraphUnit.sName, m_cFSR.cGraphUnit.sAbbrev, m_cFSR.cGraphUnit.dBaseToUnit, m_cFSR.cGraphUnit.sAbbrev2);
+        psVal1, psVal2, m_cFSR.cGraphUnit.dBaseToUnit, psVal3);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+
+    if(bFree1) g_free(psVal1);
+    if(bFree2) g_free(psVal2);
+    if(bFree3) g_free(psVal3);
 
     g_sprintf(sbuf, "    <Dimensioning ArrowType=\"%d\" ArrowLength=\"%.3f\" ArrowWidth=\"%.3f\" FontAttrs=\"%d\" FontSize=\"%.3f\"\n",
         m_cFSR.iArrowType, m_cFSR.dArrowLen, m_cFSR.dArrowWidth, m_cFSR.bFontAttrs, m_cFSR.dFontSize);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
 
+    psVal1 = GetEscapedStr(sVal1, m_cFSR.sFontFace, &bFree1);
+    psVal2 = GetEscapedStr(sVal2, m_cFSR.sLengthMask, &bFree2);
+    psVal3 = GetEscapedStr(sVal3, m_cFSR.sAngleMask, &bFree3);
+
     g_sprintf(sbuf, "      BaseLine=\"%.3f\" FontFace=\"%s\" LengthMask=\"%s\" AngleMask=\"%s\"/>\n  </PageSettings>\n",
-        m_cFSR.dBaseLine, m_cFSR.sFontFace, m_cFSR.sLengthMask, m_cFSR.sAngleMask);
+        m_cFSR.dBaseLine, psVal1, psVal2, psVal3);
     fwrite(sbuf, sizeof(gchar), strlen(sbuf), fp);
+
+    if(bFree1) g_free(psVal1);
+    if(bFree2) g_free(psVal2);
+    if(bFree3) g_free(psVal3);
 
     m_pFileSetupDlg->SaveSettings(fp);
     m_pLineStyleDlg->SaveSettings(fp);
