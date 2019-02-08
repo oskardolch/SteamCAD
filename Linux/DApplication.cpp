@@ -972,6 +972,7 @@ GtkWidget* CDApplication::GetStatusBar()
 void CDApplication::SetStatusBarMsg(int iPanel, const gchar *pMsg)
 {
     GtkStatusbar *pStatBar = (GtkStatusbar*)GetStatusBar();
+    int iNewWidth;
     switch(iPanel)
     {
     case 0:
@@ -980,6 +981,8 @@ void CDApplication::SetStatusBarMsg(int iPanel, const gchar *pMsg)
         break;
     case 1:
         gtk_label_set_text(GTK_LABEL(m_pStatLab1), pMsg);
+        pango_layout_get_pixel_size(gtk_label_get_layout(GTK_LABEL(m_pStatLab1)), &iNewWidth, NULL);
+        gtk_widget_set_size_request(m_pStatLab1, iNewWidth + 20, 23);
         break;
     case 2:
         gtk_label_set_text(GTK_LABEL(m_pStatLab2), pMsg);
@@ -3633,6 +3636,30 @@ void CDApplication::MouseMove(GtkWidget *widget, GdkEventMotion *event, gboolean
         DrawCross(cr);
 
         cairo_destroy(cr);
+
+        if(m_iToolMode == tolMeas)
+        {
+            if(m_cMeasPoint1.bIsSet && !m_cMeasPoint2.bIsSet)
+            {
+                CDPoint cDistPt = m_cLastDrawPt - m_cMeasPoint1.cOrigin;
+                gchar *sUnit;
+                if(m_bPaperUnits)
+                {
+                    cDistPt /= m_cFSR.cPaperUnit.dBaseToUnit;
+                    sUnit = m_cFSR.cPaperUnit.sAbbrev;
+                }
+                else
+                {
+                    cDistPt /= m_dDrawScale;
+                    cDistPt /= m_cFSR.cLenUnit.dBaseToUnit;
+                    sUnit = m_cFSR.cLenUnit.sAbbrev;
+                }
+                double dNorm = GetNorm(cDistPt);
+                sprintf(m_sStatus1Msg, "dx: %.3f, dy: %.3f, dist: %.4f (%s)", fabs(cDistPt.x),
+                    fabs(cDistPt.y), dNorm, sUnit);
+                SetStatusBarMsg(1, m_sStatus1Msg);
+            }
+        }
     }
     return;
 }
@@ -3746,6 +3773,7 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
     CDPoint cDistPt;
     gchar sBuf[128];
     double dNorm;
+    gchar *sUnit;
 
     PDPtrList pRegions = new CDPtrList();
     pRegions->SetDblVal(m_dUnitScale);
@@ -3826,14 +3854,20 @@ void CDApplication::MouseLButtonUp(GtkWidget *widget, GdkEventButton *event)
                 m_cMeasPoint2.bIsSet = true;
                 m_cMeasPoint2.cOrigin = m_cLastDrawPt;
                 cDistPt = m_cMeasPoint2.cOrigin - m_cMeasPoint1.cOrigin;
-                dNorm = GetNorm(cDistPt);
-                if(!m_bPaperUnits)
+                if(m_bPaperUnits)
+                {
+                    cDistPt /= m_cFSR.cPaperUnit.dBaseToUnit;
+                    sUnit = m_cFSR.cPaperUnit.sAbbrev;
+                }
+                else
                 {
                     cDistPt /= m_dDrawScale;
-                    dNorm /= m_dDrawScale;
+                    cDistPt /= m_cFSR.cLenUnit.dBaseToUnit;
+                    sUnit = m_cFSR.cLenUnit.sAbbrev;
                 }
-                sprintf(sBuf, "dx: %.3f, dy: %.3f, dist: %.4f", fabs(cDistPt.x),
-                    fabs(cDistPt.y), dNorm);
+                dNorm = GetNorm(cDistPt);
+                sprintf(sBuf, "dx: %.3f, dy: %.3f, dist: %.4f (%s)", fabs(cDistPt.x),
+                    fabs(cDistPt.y), dNorm, sUnit);
                 SetStatusBarMsg(1, sBuf);
             }
             else
