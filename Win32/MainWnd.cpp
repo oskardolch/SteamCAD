@@ -2038,6 +2038,7 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
     CDPoint cDistPt;
     wchar_t wsBuf[128];
     double dNorm;
+    wchar_t *wsUnit;
 
     PDPtrList pRegions = new CDPtrList();
     pRegions->SetDblVal(m_dUnitScale);
@@ -2129,14 +2130,20 @@ LRESULT CMainWnd::WMLButtonUp(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
                 m_cMeasPoint2.bIsSet = true;
                 m_cMeasPoint2.cOrigin = m_cLastDrawPt;
                 cDistPt = m_cMeasPoint2.cOrigin - m_cMeasPoint1.cOrigin;
-                dNorm = GetNorm(cDistPt);
-                if(!m_bPaperUnits)
+                if(m_bPaperUnits)
+                {
+                    cDistPt /= m_cFSR.cPaperUnit.dBaseToUnit;
+                    wsUnit = m_cFSR.cPaperUnit.wsAbbrev;
+                }
+                else
                 {
                     cDistPt /= m_dDrawScale;
-                    dNorm /= m_dDrawScale;
+                    cDistPt /= m_cFSR.cLenUnit.dBaseToUnit;
+                    wsUnit = m_cFSR.cLenUnit.wsAbbrev;
                 }
-                swprintf(wsBuf, L"dx: %.3f, dy: %.3f, dist: %.4f", fabs(cDistPt.x),
-                    fabs(cDistPt.y), dNorm);
+                dNorm = GetNorm(cDistPt);
+                swprintf(wsBuf, L"dx: %.3f, dy: %.3f, dist: %.4f (%s)", fabs(cDistPt.x),
+                    fabs(cDistPt.y), dNorm, wsUnit);
                 SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)wsBuf);
             }
             else
@@ -3385,6 +3392,30 @@ LRESULT CMainWnd::WMMouseMove(HWND hwnd, WPARAM fwKeys, int xPos, int yPos)
         SelectObject(hdc, hPrevPen);
         SelectClipRgn(hdc, NULL);
         ReleaseDC(hwnd, NULL);
+
+        if(m_iToolMode == tolMeas)
+        {
+            if(m_cMeasPoint1.bIsSet && !m_cMeasPoint2.bIsSet)
+            {
+                CDPoint cDistPt = m_cLastDrawPt - m_cMeasPoint1.cOrigin;
+                wchar_t *wsUnit;
+                if(m_bPaperUnits)
+                {
+                    cDistPt /= m_cFSR.cPaperUnit.dBaseToUnit;
+                    wsUnit = m_cFSR.cPaperUnit.wsAbbrev;
+                }
+                else
+                {
+                    cDistPt /= m_dDrawScale;
+                    cDistPt /= m_cFSR.cLenUnit.dBaseToUnit;
+                    wsUnit = m_cFSR.cLenUnit.wsAbbrev;
+                }
+                double dNorm = GetNorm(cDistPt);
+                swprintf(m_wsStatus2Msg, L"dx: %.3f, dy: %.3f, dist: %.4f (%s)", fabs(cDistPt.x),
+                    fabs(cDistPt.y), dNorm, wsUnit);
+                SendMessage(m_hStatus, SB_SETTEXT, 1, (LPARAM)m_wsStatus2Msg);
+            }
+        }
     }
     return 0;
 }
