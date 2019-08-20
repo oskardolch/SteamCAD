@@ -133,7 +133,7 @@ void ExportDimText(cairo_t *pct, PDPrimitive pPrim, PDObject pObj, double dScale
     CDFileAttrs cFileAttrs;
     pObj->GetDimFontAttrs(iPos, &cFileAttrs);
 
-    double da = cFileAttrs.dFontSize*dRat;
+    double da = 1.6*cFileAttrs.dFontSize*dRat;
 
     bool bDiam = (psBuf[0] == '*');
     int iStart = 0;
