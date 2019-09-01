@@ -930,11 +930,8 @@ bool CMainWnd::PromptForSave(HWND hWnd)
 bool CMainWnd::SaveFile(HWND hWnd, LPWSTR wsFile, bool bSelectOnly)
 {
     bool bSave = true;
-    bool bNewFile = false;
     if(!wsFile[0])
     {
-        bNewFile = true;
-
         wchar_t wsFilter[128], wsCurDir[1];
         wsCurDir[0] = 0;
         LoadString(m_hInstance, IDS_STEAMDRAWFILTER, wsFilter, 128);
@@ -959,7 +956,6 @@ bool CMainWnd::SaveFile(HWND hWnd, LPWSTR wsFile, bool bSelectOnly)
     m_pDrawObjects->SaveToFile(pf, true, bSelectOnly);
     fclose(pf);
 
-    if(!bNewFile) SetTitle(hWnd, true);
     return true;
 }
 
@@ -1040,7 +1036,10 @@ LRESULT CMainWnd::FileOpenCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 
 LRESULT CMainWnd::FileSaveCmd(HWND hwnd, WORD wNotifyCode, HWND hwndCtl)
 {
-    SaveFile(hwnd, m_wsFileName, false);
+    if(SaveFile(hwnd, m_wsFileName, false))
+    {
+        if(m_wsFileName) SetTitle(hwnd, true);
+    }
     return 0;
 }
 
