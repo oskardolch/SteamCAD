@@ -1826,11 +1826,8 @@ bool CDApplication::PromptForSave(GtkWidget *widget)
 bool CDApplication::SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly)
 {
     bool bSave = true;
-    bool bNewFile = false;
     if(!(*psFile))
     {
-        bNewFile = true;
-
         //GError *error = NULL;
         GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save File"),
         GTK_WINDOW(widget), GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL,
@@ -1875,7 +1872,6 @@ bool CDApplication::SaveFile(GtkWidget *widget, gchar **psFile, bool bSelectOnly
     m_pDrawObjects->SaveToFile(pf, true, bSelectOnly);
     fclose(pf);
 
-    if(!bNewFile) SetTitle(widget, true);
     return true;
 }
 
@@ -2102,7 +2098,10 @@ void CDApplication::FileOpenCmd(bool bFromAccel)
 
 void CDApplication::FileSaveCmd(bool bFromAccel)
 {
-    SaveFile(m_pMainWnd, &m_sFileName, false);
+    if(SaveFile(m_pMainWnd, &m_sFileName, false))
+    {
+      if(m_sFileName) SetTitle(m_pMainWnd, true);
+    }
     return;
 }
 

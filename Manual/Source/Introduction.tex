@@ -80,30 +80,47 @@ Finally SteamCAD only creates 2D drawings. It is not a 3D CAD.
 \section{Installing SteamCAD}
 \special{pdf: out 2 << /Title (\thesection. Installing SteamCAD) /Dest [ @thispage /FitH @ypos ] >>}
 
-To install SteamCAD on a Linux system, you should install the follwoing dependencies: gcc, cairo-dev
-and gtk+-dev. Then download the source code and run ``make main'' from the console. Before you run
-the application, copy the files DPapers.ini and DUnits.ini from the Papers fodler into the
-/home/<me>/.SteamCAD folder. The meaning of the ini files will be explained later.
-
-The compilation steps on Debian based systems might look as the following:
+On a GNU Build system it is possible to install SteamCAD in a standard way:
 \begin{verbatim}
 $ sudo apt-get install gcc libcairo2-dev gtk+-dev
 $ git clone https://github.com/oskardolch/SteamCAD.git
 $ cd SteamCAD
-$ mkdir Build
-$ make libdxflib.a
-$ make main
+$ ./configure
+$ make
+$ sudo make install
 \end{verbatim}
 
-Then you can run SteamCAD from the Build folder or copy the executable file anywhere.
+SteamCAD then appears in the Applications > Graphics menu.
 
-Building of the software on MS Windows is not straightforward, since it involves building of
-the cairo.dll. So the best is to download the zip with binaries for either 32bit or for 64bit
+On a Windows system, the best is to download the zip with binaries for either 32bit or for 64bit
 platform. Note that Windows XP and older systems are not supported by the provided build. If
 you want to run it on an unsuported Windows system, you should compile it yourself.
 
 There is no installation utility provided for MS Windows, just unzip the package into a directory
 where you have write access to. So the best choise is somewhere under your documents folder.
+
+\section{Building SteamCAD}
+\special{pdf: out 2 << /Title (\thesection. Building SteamCAD) /Dest [ @thispage /FitH @ypos ] >>}
+
+For a debuging purpose it is also possible to build SteamCAD bypassing the GNU build system.
+You should install the follwoing dependencies first: gcc, cairo-dev and gtk+-dev.
+Then download the source code and compile it from the console. Before you run
+the application, copy the files DPapers.ini and DUnits.ini from the Papers folder into the
+/home/<me>/.SteamCAD folder. The meaning of the ini files will be explained later.
+
+The compilation steps and SteamCAD invocation on Debian based systems might look as the following:
+\begin{verbatim}
+$ sudo apt-get install gcc libcairo2-dev gtk+-dev
+$ git clone https://github.com/oskardolch/SteamCAD.git
+$ cd SteamCAD
+$ mkdir Build
+$ make -fmakefile.gcc libdxflib.a
+$ make -fmakefile.gcc main
+$ ./Build/SteamCAD
+\end{verbatim}
+
+Building of the software on MS Windows is not straightforward, since it involves building of
+the cairo.dll.
 
 \section{Prerequisities}
 \special{pdf: out 2 << /Title (\thesection. Prerequisities) /Dest [ @thispage /FitH @ypos ] >>}
