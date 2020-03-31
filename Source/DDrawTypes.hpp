@@ -121,7 +121,7 @@ public:
     bool RotatePoints(CDPoint cOrig, double dRot, int iDimFlag);
     bool MovePoints(CDPoint cDir, double dDist, int iDimFlag);
     void MirrorPoints(CDLine cLine);
-    bool AddCrossPoint(CDPoint cPt, double dDist, PDPtrList pRegions);
+    bool AddCrossPoint(CDPoint cPt, double dDist);
     bool AddCrossPoint(double dRef);
     bool GetPointRefDist(double dRef, double *pdDist);
     double GetNearestCrossPoint(CDPoint cPt, PDPoint pPt);

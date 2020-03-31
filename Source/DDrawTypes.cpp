@@ -2467,7 +2467,7 @@ void CDObject::MirrorPoints(CDLine cLine)
     }
 }
 
-bool CDObject::AddCrossPoint(CDPoint cPt, double dDist, PDPtrList pRegions)
+bool CDObject::AddCrossPoint(CDPoint cPt, double dDist)
 {
     CDLine cPtX;
     double d1 = GetDistFromPt(cPt, cPt, false, &cPtX, NULL);
@@ -2482,22 +2482,6 @@ bool CDObject::AddCrossPoint(CDPoint cPt, double dDist, PDPtrList pRegions)
         if(cPtX.dRef > dRef - 0.001) m_pCrossPoints->Remove(i);
         else m_pCrossPoints->InsertPoint(i, cPtX.dRef);
     }
-
-    double dLWidth = fabs(m_cLineStyle.dWidth);
-    if(dLWidth < 1.0) dLWidth = 1.0;
-
-    PDPolygon pPoly = (PDPolygon)malloc(sizeof(CDPolygon));
-    pPoly->iPoints = 4;
-    pPoly->pPoints = (PDPoint)malloc(4*sizeof(CDPoint));
-    pPoly->pPoints[0].x = cPtX.cOrigin.x - 4.0*dLWidth;
-    pPoly->pPoints[0].y = cPtX.cOrigin.y - 4.0*dLWidth;
-    pPoly->pPoints[1].x = cPtX.cOrigin.x + 4.0*dLWidth;
-    pPoly->pPoints[1].y = cPtX.cOrigin.y - 4.0*dLWidth;
-    pPoly->pPoints[2].x = cPtX.cOrigin.x + 4.0*dLWidth;
-    pPoly->pPoints[2].y = cPtX.cOrigin.y + 4.0*dLWidth;
-    pPoly->pPoints[3].x = cPtX.cOrigin.x - 4.0*dLWidth;
-    pPoly->pPoints[3].y = cPtX.cOrigin.y + 4.0*dLWidth;
-    pRegions->Add(pPoly);
 
     return true;
 }
@@ -4173,17 +4157,15 @@ bool CDataList::SetCrossSelected(CDPoint cPt, double dDist, PDRect pRect, PDPtrL
 {
     bool bRes = false;
     PDObject pObj;
-    CDLine cLn;
-    cLn.bIsSet = false;
     for(int i = 0; i < m_iDataLen; i++)
     {
         pObj = m_ppObjects[i];
         if(pObj->GetSelected())
         {
-            if(pObj->AddCrossPoint(cPt, dDist, pRegions))
+            if(pObj->AddCrossPoint(cPt, dDist))
             {
                 bRes = true;
-                pObj->BuildPrimitives(cLn, 0, pRect, 0, NULL);
+                pObj->AddRegions(pRegions, -1);
             }
         }
     }
