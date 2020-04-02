@@ -483,6 +483,7 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
                     iEnd = 2;
                     dStart = dEnd;
                     dEnd = d1;
+                    d2 = d1 - 1.0;
                     if(nCrs < 1) dEnd += cBnds.y - cBnds.x;
                     else GetPointRefDist(m_pCrossPoints->GetPoint(iFirst), &d2);
                     if(fabs(dEnd - d2) < g_dPrec) iEnd = 1;
