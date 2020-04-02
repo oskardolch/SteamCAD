@@ -427,6 +427,11 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
                 if(d1 > d2) iFirst = m_pCrossPoints->GetIndex(m_cBounds[0].dRef);
                 if(iFirst < 0) iFirst = 0;
             }
+            else if(iClosed > 0)
+            {
+              iFirst = m_pCrossPoints->GetIndex(m_cBounds[0].dRef);
+              if(iFirst < 0) iFirst = 0;
+            }
 
             if(nCrs > 0)
             {
@@ -435,6 +440,12 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
                 if(fabs(dEnd - d1) > g_dPrec)
                 {
                     AddPatSegment(d1, 2, dEnd, 1, &cBnds, pRect);
+                    dStart = dEnd;
+                }
+                else if((iClosed > 0) && (nCrs < 2))
+                {
+                    dEnd = d1 + cBnds.y - cBnds.x;
+                    AddPatSegment(d1, 1, dEnd, 1, &cBnds, pRect);
                     dStart = dEnd;
                 }
 
@@ -469,9 +480,13 @@ int CDObject::BuildPrimitives(CDLine cTmpPt, int iMode, PDRect pRect, int iTemp,
             {
                 if(iClosed > 0)
                 {
+                    iEnd = 2;
                     dStart = dEnd;
-                    dEnd = d1 + cBnds.y - cBnds.x;
-                    AddPatSegment(dStart, iStart, dEnd, 2, &cBnds, pRect);
+                    dEnd = d1;
+                    if(nCrs < 1) dEnd += cBnds.y - cBnds.x;
+                    else GetPointRefDist(m_pCrossPoints->GetPoint(iFirst), &d2);
+                    if(fabs(dEnd - d2) < g_dPrec) iEnd = 1;
+                    AddPatSegment(dStart, iStart, dEnd, iEnd, &cBnds, pRect);
                 }
                 else AddPatSegment(dEnd, iStart, cBnds.y, iEnd, &cBnds, pRect);
             }
