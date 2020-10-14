@@ -1527,7 +1527,7 @@ SendMessage(g_hStatus, SB_SETTEXT, 2, (LPARAM)buf);*/
             cQuad.cPt2 = pCache->GetPoint(iCnt - 2, 0).cPoint;
             cQuad.cPt3 = pCache->GetPoint(iCnt - 1, 0).cPoint;
             cDir = GetQuadNormal(&cQuad, 1.0);
-            bPt1 = cQuad.cPt1 + dr*cDir;
+            bPt1 = cQuad.cPt3 + dr*cDir;
             bPt2 = Rotate(cPt - bPt1, cDir, false);
             d2 = GetDist(cPt, bPt1);
             if(bPt2.x < 0.0) d2 *= -1.0;
